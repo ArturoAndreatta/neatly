@@ -11,7 +11,7 @@ jobs:
     name: Testes no Windows
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Instalar Pester e PSScriptAnalyzer
         shell: powershell
@@ -23,7 +23,7 @@ jobs:
       - name: Analisar os scripts
         shell: powershell
         run: |
-          $erros = Invoke-ScriptAnalyzer -Path ./src, ./instalar-web.ps1 -Recurse -Severity Error
+          $erros = @('./src', './instalar-web.ps1', './tests') | ForEach-Object { Invoke-ScriptAnalyzer -Path $_ -Recurse -Severity Error }
           $erros | Format-Table -AutoSize
           if ($erros) { exit 1 }
 
