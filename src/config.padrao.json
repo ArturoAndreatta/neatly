@@ -1,0 +1,31 @@
+{
+  "modo": "script",
+  "modelo": "claude-haiku-5-5",
+  "minutosRecentes": 10,
+  "categorias": {
+    "Compactados": ["zip", "rar", "7z", "tar", "gz"],
+    "Imagens": ["png", "jpg", "jpeg", "gif", "webp", "svg", "heic", "bmp"],
+    "Documentos": ["pdf", "docx", "doc", "xlsx", "xls", "csv", "pptx", "ppt", "txt", "odt", "ods"],
+    "Instaladores": ["exe", "msi"],
+    "Vídeos": ["mp4", "mkv", "mov", "avi", "webm"],
+    "Áudio": ["mp3", "wav", "flac", "ogg", "m4a"],
+    "Web": ["html", "htm"],
+    "Código": ["ps1", "json", "md", "py", "js", "ts", "bat", "sh", "sql", "xml"]
+  },
+  "ignorar": [
+    "desktop.ini",
+    "*.crdownload",
+    "*.part",
+    "*.tmp",
+    "*.env",
+    ".env*",
+    "*.pem",
+    "*.key",
+    "*.pfx",
+    "*.p12",
+    "id_rsa*",
+    "*credentials*",
+    "*service-account*",
+    "*firebase-adminsdk*"
+  ]
+}
