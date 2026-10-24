@@ -27,6 +27,8 @@ Separa por tipo de arquivo, mostra tudo num painel bonito e deixa desfazer qualq
 | 🔍 **"Onde foi parar meu arquivo?"** | Digita parte do nome e ele mostra para qual pasta foi, com botão para abrir no Explorer. |
 | ↩️ **Desfazer** | Não gostou de uma rodada? Um clique e os arquivos voltam para onde estavam. |
 | 🛡️ **Cuidadoso** | Nunca apaga nada, nunca sobrescreve, não mexe em subpastas, ignora arquivos baixando e arquivos com cara de senha (`.env`, `.pem`, `.key`...). |
+| 📈 **Mede o consumo do Claude** | Guarda o limite de 5h e o semanal antes e depois de cada rodada e mostra a média por semana. Se a janela de 5h reiniciar no meio da rodada, ele conta certo. |
+| 🔄 **Atualiza com um clique** | Quando sai versão nova aqui no GitHub, aparece o botão **Atualizar** no painel, com a lista do que mudou. |
 | 🤖 **Claude opcional** | Funciona só com regras fixas, sem IA. Se você tem o Claude Code, pode deixar o Claude Haiku fazer o serviço. |
 
 ---
@@ -65,6 +67,8 @@ Quando quiser ver o que aconteceu, abra o atalho **Organizador de Downloads** (n
 | **Horário diário** | Muda quando ele roda |
 | **Modo** | Alterna entre *Claude* e *Só script* |
 | **Histórico** | Clique numa rodada para ver os arquivos, o resumo e desfazer |
+| **Atualizar** | Aparece quando tem versão nova. Mostra o que mudou e atualiza sem perder nada |
+| **Consumo do limite** | Quanto do seu limite do Claude as rodadas gastaram: últimos 7 dias, média semanal e por rodada |
 | **Dados** | Abre a pasta com `config.json`, histórico e o `configurar-token.cmd` |
 
 ---
@@ -157,6 +161,12 @@ O token expirou ou não foi configurado. Painel → **Dados** → `configurar-to
 </details>
 
 <details>
+<summary><b>Como ele mede o consumo do limite do Claude?</b></summary>
+
+A cada resposta, o Claude Code informa quanto da janela de 5 horas e do limite semanal já foi usado. O programa guarda a primeira e a última leitura de cada rodada e soma a diferença. Se a janela de 5h reiniciar no meio, ele soma o que foi gasto antes e depois do reinício. Vale saber: se você estiver usando o Claude em outro lugar durante a rodada, esse uso entra na conta também.
+</details>
+
+<details>
 <summary><b>Posso usar no notebook do trabalho?</b></summary>
 
 Pode, ele não precisa de administrador. Mas vale conferir as regras de TI da empresa sobre scripts e, no modo Claude, sobre qual conta do Claude usar.
@@ -165,7 +175,9 @@ Pode, ele não precisa de administrador. Mas vale conferir as regras de TI da em
 <details>
 <summary><b>Como atualizo?</b></summary>
 
-Baixe de novo e rode o `instalar.cmd`. Configuração, histórico, horário e token são mantidos.
+Pelo próprio painel: quando sai versão nova, aparece o botão **Atualizar** com a lista do que mudou. Um clique e pronto. Configuração, histórico, horário e token são mantidos.
+
+Se preferir, também dá para baixar de novo e rodar o `instalar.cmd`.
 </details>
 
 ---

@@ -83,6 +83,70 @@ function Desfazer($id) {
   return [ordered]@{ restaurados = $ok; falhas = $falhas }
 }
 
+$script:cacheVersao = $null
+$script:cacheVersaoEm = [datetime]::MinValue
+
+function Versao([bool]$forcar) {
+  # Compara a versao instalada com o main do GitHub. Guarda 30 min para nao gastar a cota da API.
+  if (-not $forcar -and $script:cacheVersao -and ((Get-Date) - $script:cacheVersaoEm).TotalMinutes -lt 30) { return $script:cacheVersao }
+  $loc = Get-VersaoLocal
+  $r = [ordered]@{ local = $null; remoto = $null; novidade = $false; novidades = @(); erro = $null }
+  if ($loc -and $loc.commit) { $r.local = "$($loc.commit)".Substring(0, 7) }
+  try {
+    $remoto = (Invoke-GitHub 'commits/main').sha
+    $r.remoto = $remoto.Substring(0, 7)
+    $r.sha = $remoto
+    if (-not ($loc -and $loc.commit)) {
+      $r.novidade = $true
+    } elseif ($loc.commit -ne $remoto) {
+      $r.novidade = $true
+      try {
+        $cmp = Invoke-GitHub "compare/$($loc.commit)...$remoto"
+        $lista = @($cmp.commits | ForEach-Object { ("$($_.commit.message)" -split "`n")[0] })
+        [array]::Reverse($lista)
+        $r.novidades = $lista
+      } catch {}
+    }
+  } catch {
+    $r.erro = 'Não consegui consultar o GitHub (sem internet ou repositório privado).'
+  }
+  $script:cacheVersao = $r
+  $script:cacheVersaoEm = Get-Date
+  return $r
+}
+
+function Atualizar {
+  $v = Versao $true
+  if (-not $v.sha) { throw ($(if ($v.erro) { $v.erro } else { 'Versão do GitHub indisponível' })) }
+  $temp = Join-Path $env:TEMP "organizador-downloads-$($v.remoto)"
+  $zip = "$temp.zip"
+  if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Recurse -Force }
+  [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+  Invoke-WebRequest "https://codeload.github.com/$($script:Repo)/zip/$($v.sha)" -OutFile $zip -UseBasicParsing -TimeoutSec 60
+  Expand-Archive -LiteralPath $zip -DestinationPath $temp -Force
+  $instalador = Get-ChildItem -LiteralPath $temp -Recurse -Filter 'instalar.ps1' | Where-Object { $_.Directory.Name -eq 'src' } | Select-Object -First 1
+  if (-not $instalador) { throw 'O pacote baixado veio sem o instalador' }
+  Get-ChildItem -LiteralPath $instalador.DirectoryName -File | Unblock-File -ErrorAction SilentlyContinue
+  # Aviso do que mudou, mostrado uma vez quando o painel voltar
+  $aviso = ConvertTo-Json -InputObject ([ordered]@{ de = $v.local; para = $v.remoto; novidades = @($v.novidades) }) -Compress
+  [IO.File]::WriteAllText((Join-Path $dir 'atualizacao.json'), $aviso, $utf8)
+  # O instalador fecha este painel, troca os arquivos e liga o painel de novo
+  Start-Process powershell.exe -WindowStyle Hidden -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$($instalador.FullName)`" -Atualizacao -Commit $($v.sha)"
+  return [ordered]@{ ok = $true; para = $v.remoto }
+}
+
+function AvisoAtualizacao {
+  $arq = Join-Path $dir 'atualizacao.json'
+  if (-not (Test-Path -LiteralPath $arq)) { return '{}' }
+  $txt = [IO.File]::ReadAllText($arq, $utf8)
+  $a = $txt | ConvertFrom-Json
+  $loc = Get-VersaoLocal
+  # So mostra quando a versao nova ja esta instalada
+  if (-not ($loc -and "$($loc.commit)".StartsWith("$($a.para)"))) { return '{}' }
+  Remove-Item -LiteralPath $arq -Force
+  return $txt
+}
+
 function Rotear($ctx) {
   $req = $ctx.Request
   $caminho = $req.Url.AbsolutePath
@@ -127,6 +191,9 @@ function Rotear($ctx) {
       Save-Config $cfg
       Responder $ctx 200 (Json (Status))
     }
+    '/api/versao'    { Responder $ctx 200 (Json (Versao ($req.QueryString['forcar'] -eq '1'))) }
+    '/api/atualizar' { Responder $ctx 200 (Json (Atualizar)) }
+    '/api/aviso_atualizacao' { Responder $ctx 200 (AvisoAtualizacao) }
     '/api/desfazer' { Responder $ctx 200 (Json (Desfazer "$($corpo.id)")) }
     '/api/abrir' {
       $downloads = Get-PastaDownloads

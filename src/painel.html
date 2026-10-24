@@ -18,6 +18,7 @@
   --mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.5 Inter,system-ui,Segoe UI,sans-serif}
 body{min-height:100vh;background:radial-gradient(1200px 500px at 85% -10%,rgba(79,209,165,.08),transparent 60%),var(--bg)}
 .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 60px}
@@ -167,6 +168,34 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-of
 @keyframes toastout{to{opacity:0;transform:translateX(20px)}}
 .skel{height:64px;border-radius:var(--raio);margin-bottom:10px;background:linear-gradient(90deg,var(--card) 0%,var(--card2) 50%,var(--card) 100%);background-size:200% 100%;animation:brilho 1.2s linear infinite}
 @keyframes brilho{to{background-position:-200% 0}}
+.btn.novo{position:relative;border-color:rgba(122,167,255,.45);color:var(--info)}
+.btn.novo .ponto-novo{width:8px;height:8px;border-radius:50%;background:var(--info);box-shadow:0 0 0 0 rgba(122,167,255,.6);animation:chama 1.8s ease-out infinite}
+@keyframes chama{0%{box-shadow:0 0 0 0 rgba(122,167,255,.6)}70%{box-shadow:0 0 0 8px rgba(122,167,255,0)}100%{box-shadow:0 0 0 0 rgba(122,167,255,0)}}
+.btn-sumir{display:none}
+.novidades{list-style:none;margin:0 0 18px;padding:0;max-height:240px;overflow:auto;border:1px solid var(--borda);border-radius:10px}
+.novidades li{padding:8px 12px;border-bottom:1px solid var(--borda);font-size:13px;color:var(--txt2)}
+.novidades li:last-child{border-bottom:0}
+.novidades li::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--acc);margin-right:10px;vertical-align:middle}
+.rodape{margin-top:28px;text-align:center;color:var(--txt3);font-size:12px}
+.rodape a{color:var(--txt2)}
+.atualizando{position:fixed;inset:0;display:grid;place-items:center;background:rgba(12,14,18,.92);backdrop-filter:blur(6px);z-index:45;opacity:0;pointer-events:none;transition:opacity .3s var(--ease)}
+.atualizando.on{opacity:1;pointer-events:auto}
+.atualizando .caixa{text-align:center;color:var(--txt2)}
+.atualizando .caixa h2{color:var(--txt);margin:14px 0 4px;font-size:18px}
+.atualizando .giro{width:28px;height:28px;border-width:3px;margin:0 auto;color:var(--acc)}
+.lim-grade{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.lim-grade>div{background:var(--bg2);border-radius:10px;padding:10px}
+.lim-grade b{display:block;font:700 18px var(--mono);margin-top:2px}
+.lim-grade small{color:var(--txt3);font-size:11.5px}
+.dias{display:flex;align-items:flex-end;gap:6px;height:64px;margin-top:14px;padding:0 2px}
+.dias .d{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+.dias .b{width:100%;max-width:26px;border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,var(--acc),var(--acc2));height:0;transition:height .8s var(--ease);min-height:2px;opacity:.9}
+.dias .b.zero{background:var(--borda)}
+.dias .l{font-size:10.5px;color:var(--txt3)}
+.limite-run{display:flex;flex-wrap:wrap;gap:8px;margin:-4px 0 12px}
+.limite-run span{font:12px var(--mono);padding:4px 10px;border-radius:8px;background:var(--bg2);color:var(--txt2)}
+.limite-run span b{color:var(--txt)}
+.limite-run span.reset{font-family:Inter,sans-serif;color:var(--warn);background:var(--warnbg)}
 .desligado{position:fixed;inset:0;display:none;place-items:center;background:var(--bg);z-index:40;text-align:center;color:var(--txt2)}
 .desligado.on{display:grid}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
@@ -198,6 +227,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-of
       <div class="seg" id="seg"><span class="marcador" id="marcador"></span><button data-modo="claude" aria-pressed="false">Claude</button><button data-modo="script" aria-pressed="false">Só script</button></div>
     </div>
     <div class="espaco"></div>
+    <button class="btn novo btn-sumir" id="bAtualizar" title="Tem versão nova no GitHub"><span class="ponto-novo"></span>Atualizar</button>
     <button class="btn" data-abrir="downloads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Downloads</button>
     <button class="btn" data-abrir="dados" title="Pasta com scripts, histórico, config.json e configurar-token.cmd">Dados</button>
     <button class="btn perigo" id="bSair" title="Desliga o servidor do painel. A tarefa continua agendada.">Fechar painel</button>
@@ -221,6 +251,17 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-of
         <div class="barras" id="barras"></div>
         <div class="dica">Soma das execuções que não foram desfeitas. Categorias e extensões ficam no config.json (botão Dados).</div>
       </div>
+      <div class="card" id="cardLimite">
+        <h2>Consumo do limite do Claude</h2>
+        <div class="lim-grade">
+          <div><span class="rotulo">Últimos 7 dias</span><b id="lim7">--</b><small>da janela de 5h</small></div>
+          <div><span class="rotulo">Média semanal</span><b id="limMedia">--</b><small>da janela de 5h</small></div>
+          <div><span class="rotulo">Por rodada</span><b id="limRodada">--</b><small>da janela de 5h</small></div>
+          <div><span class="rotulo">Limite semanal</span><b id="limSem">--</b><small>gasto nos últimos 7 dias</small></div>
+        </div>
+        <div class="dias" id="limDias"></div>
+        <div class="dica" id="limDica">Mede o limite antes e depois de cada rodada. Se você usar o Claude em outro lugar durante a rodada, entra na conta também.</div>
+      </div>
       <div class="card">
         <h2 style="margin-bottom:10px">Na fila da próxima rodada</h2>
         <ul class="fila" id="fila"></ul>
@@ -228,10 +269,12 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-of
       </div>
     </aside>
   </div>
+  <div class="rodape" id="rodape">&nbsp;</div>
 </div>
 
-<div class="fundo" id="fundo"><div class="modal" role="dialog" aria-modal="true"><h3 id="mTit"></h3><p id="mTxt"></p><div class="acoesdet"><button class="btn" id="mNao">Cancelar</button><button class="btn prim" id="mSim">Confirmar</button></div></div></div>
+<div class="fundo" id="fundo"><div class="modal" role="dialog" aria-modal="true"><h3 id="mTit"></h3><p id="mTxt"></p><ul class="novidades" id="mLista" hidden></ul><div class="acoesdet"><button class="btn" id="mNao">Cancelar</button><button class="btn prim" id="mSim">Confirmar</button></div></div></div>
 <div class="toasts" id="toasts"></div>
+<div class="atualizando" id="atualizando"><div class="caixa"><span class="giro" style="display:block"></span><h2>Atualizando...</h2><p>Baixando a versão nova e reiniciando o painel. Volta em alguns segundos.</p></div></div>
 <div class="desligado" id="desligado"><div><h2>Painel fechado</h2><p>A tarefa segue agendada. Abra o atalho "Organizador de Downloads" quando quiser voltar.</p></div></div>
 
 <script>
@@ -245,6 +288,7 @@ async function api(caminho, corpo){
   if (!r.ok) throw new Error(j.erro || ('Erro HTTP ' + r.status));
   return j;
 }
+const limpaCommit = m => { const t = String(m || '').replace(/^\w+(\([^)]*\))?!?:\s*/, ''); return t.charAt(0).toUpperCase() + t.slice(1); };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmtData = iso => iso ? new Date(iso).toLocaleString('pt-BR', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'}) : '--';
 function relativo(iso){
@@ -263,9 +307,12 @@ function toast(msg, err){
   $('#toasts').appendChild(t);
   setTimeout(() => { t.classList.add('sai'); setTimeout(() => t.remove(), 300); }, 3800);
 }
-function confirmar(tit, txt){
+function confirmar(tit, txt, lista, soOk){
   return new Promise(res => {
-    $('#mTit').textContent = tit; $('#mTxt').textContent = txt; $('#fundo').classList.add('on'); $('#mSim').focus();
+    $('#mTit').textContent = tit; $('#mTxt').textContent = txt;
+    const ul = $('#mLista'); ul.hidden = !(lista && lista.length); ul.innerHTML = (lista || []).map(i => `<li>${esc(limpaCommit(i))}</li>`).join('');
+    $('#mNao').hidden = !!soOk; $('#mSim').textContent = soOk ? 'Beleza' : 'Confirmar';
+    $('#fundo').classList.add('on'); $('#mSim').focus();
     const fim = v => { $('#fundo').classList.remove('on'); $('#mSim').onclick = $('#mNao').onclick = null; res(v); };
     $('#mSim').onclick = () => fim(true); $('#mNao').onclick = () => fim(false);
     $('#fundo').onclick = e => { if (e.target.id === 'fundo') fim(false); };
@@ -316,10 +363,45 @@ function renderStatus(){
   agendar(rodando ? 2000 : 6000);
 }
 
+function fmtPct(v){ if (v == null || isNaN(v)) return '--'; if (v > 0 && v < 0.1) return '<0,1%'; return v.toLocaleString('pt-BR', {maximumFractionDigits: v < 10 ? 2 : 1}) + '%'; }
+
+function renderLimites(){
+  const comDados = historico.filter(h => h.limites && h.limites.cincoHoras);
+  const card = $('#cardLimite');
+  if (!comDados.length){
+    $('#lim7').textContent = $('#limMedia').textContent = $('#limRodada').textContent = $('#limSem').textContent = '--';
+    $('#limDias').innerHTML = '';
+    $('#limDica').textContent = status && status.modo !== 'claude' ? 'Aparece quando você usa o modo Claude.' : 'Aparece depois da primeira rodada com o Claude.';
+    return;
+  }
+  const agora = Date.now(), dia = 864e5;
+  const c5 = h => h.limites.cincoHoras.consumo || 0;
+  const ult7 = comDados.filter(h => agora - new Date(h.inicio) < 7 * dia);
+  $('#lim7').textContent = fmtPct(ult7.reduce((a, h) => a + c5(h), 0));
+  const total = comDados.reduce((a, h) => a + c5(h), 0);
+  const primeiro = Math.min(...comDados.map(h => +new Date(h.inicio)));
+  const semanas = Math.max(1, (agora - primeiro) / (7 * dia));
+  $('#limMedia').textContent = fmtPct(total / semanas);
+  $('#limRodada').textContent = fmtPct(total / comDados.length);
+  $('#limSem').textContent = fmtPct(ult7.reduce((a, h) => a + ((h.limites.semanal && h.limites.semanal.consumo) || 0), 0));
+  const dias = [];
+  for (let i = 6; i >= 0; i--){
+    const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - i);
+    const fim = +d + dia;
+    const v = comDados.filter(h => { const t = +new Date(h.inicio); return t >= +d && t < fim; }).reduce((a, h) => a + c5(h), 0);
+    dias.push({ l: d.toLocaleDateString('pt-BR', {weekday: 'short'}).replace('.', ''), v });
+  }
+  const max = Math.max(...dias.map(d => d.v), 0.0001);
+  $('#limDias').innerHTML = dias.map(d => `<div class="d" title="${fmtPct(d.v)} da janela de 5h"><div class="b${d.v ? '' : ' zero'}" data-h="${(d.v / max * 100).toFixed(1)}"></div><span class="l">${esc(d.l)}</span></div>`).join('');
+  requestAnimationFrame(() => requestAnimationFrame(() => document.querySelectorAll('#limDias .b').forEach(b => b.style.height = Math.max(3, +b.dataset.h) + '%')));
+  $('#limDica').textContent = 'Mede o limite antes e depois de cada rodada. Se você usar o Claude em outro lugar durante a rodada, entra na conta também.';
+}
+
 function renderStats(){
   const cont = {}; let total = 0;
   historico.filter(h => !h.desfeito).forEach(h => (h.movidos || []).forEach(m => { cont[m.pasta] = (cont[m.pasta] || 0) + 1; total++; }));
   $('#cTotal').textContent = total;
+  renderLimites();
   const execs = historico.length, erros = historico.filter(h => h.status !== 'ok').length;
   $('#cTotalSub').textContent = execs ? `em ${execs} execução(ões)${erros ? ' · ' + erros + ' com erro' : ''}` : 'nenhuma execução ainda';
   const pastas = (status && status.categorias) || [];
@@ -369,6 +451,7 @@ function renderHistorico(){
           <div><span class="rotulo">Custo est. API</span><b>${h.custoUsd != null ? 'US$ ' + Number(h.custoUsd).toFixed(4) : '--'}</b></div>
           <div><span class="rotulo">Código saída</span><b>${h.codigoSaida ?? '--'}</b></div>
         </div>
+        ${h.limites ? `<div class="limite-run">${h.limites.cincoHoras ? `<span>Limite 5h: ${fmtPct(h.limites.cincoHoras.antes)} → ${fmtPct(h.limites.cincoHoras.depois)} <b>+${fmtPct(h.limites.cincoHoras.consumo)}</b></span>` : ''}${h.limites.semanal ? `<span>Semanal: ${fmtPct(h.limites.semanal.antes)} → ${fmtPct(h.limites.semanal.depois)} <b>+${fmtPct(h.limites.semanal.consumo)}</b></span>` : ''}${h.limites.cincoHoras && h.limites.cincoHoras.reiniciou ? '<span class="reset">A janela de 5h reiniciou durante a rodada</span>' : ''}</div>` : ''}
         ${h.resumo ? `<div class="resumo${h.status !== 'ok' ? ' err' : ''}">${esc(h.resumo)}</div>` : ''}
         ${loginRuim ? '<div class="resumo dica-login">Problema de login do Claude. Clique em <b>Dados</b> e abra o <b>configurar-token.cmd</b> para salvar um token de 1 ano.</div>' : ''}
         ${mostrar.length ? `<ul class="arquivos">${mostrar.map(m => `<li><span class="nome" title="${esc(m.nome)}">${marca(m.nome)}</span><span class="tam">${tam(m.tamanho)}</span><span class="p">${esc(m.pasta)}</span>${m.destino && !h.desfeito ? `<button class="mini" data-mostrar="${esc(m.destino)}" title="Mostrar no Explorer">abrir</button>` : ''}</li>`).join('')}</ul>` : '<div class="vazio" style="padding:12px">Nenhum arquivo movido nessa rodada.</div>'}
@@ -376,6 +459,27 @@ function renderHistorico(){
       </div></div></div>
     </article>`;
   }).join('');
+}
+
+let versao = null;
+async function carregarVersao(forcar){
+  try { versao = await api('/api/versao' + (forcar ? '?forcar=1' : '')); } catch { return; }
+  $('#bAtualizar').classList.toggle('btn-sumir', !versao.novidade);
+  $('#rodape').innerHTML = `Organizador de Downloads · versão ${esc(versao.local || 'desconhecida')}${versao.erro ? ' · ' + esc(versao.erro) : versao.novidade ? ' · versão nova disponível' : ' · atualizado'} · <a href="https://github.com/ArturoAndreatta/organizador-downloads" target="_blank" rel="noopener">GitHub</a>`;
+}
+async function esperarVoltar(){
+  const inicio = Date.now(); let caiu = false;
+  while (Date.now() - inicio < 120000){
+    await new Promise(r => setTimeout(r, 1500));
+    try { const r = await fetch('/api/ping', {cache: 'no-store'}); if (r.ok && (caiu || Date.now() - inicio > 8000)) { location.reload(); return; } } catch { caiu = true; }
+  }
+  $('#atualizando').classList.remove('on'); toast('O painel demorou para voltar. Abra o atalho de novo.', true);
+}
+async function avisoAtualizacao(){
+  let a; try { a = await api('/api/aviso_atualizacao'); } catch { return; }
+  if (!a || !a.para) return;
+  const lista = a.novidades || [];
+  await confirmar('Atualizado! 🎉', lista.length ? 'O que tem de novo:' : `Agora na versão ${a.para}.`, lista, true);
 }
 
 async function carregarStatus(){ try { status = await api('/api/status'); renderStatus(); } catch(e){ falhaConexao(e); } }
@@ -400,6 +504,15 @@ $('#seg').addEventListener('click', async e => {
   if (!b || b.disabled || b.dataset.modo === status.modo) return;
   try { status = await api('/api/modo', {modo: b.dataset.modo}); renderStatus(); toast(status.modo === 'claude' ? 'Modo Claude ativado' : 'Modo só script ativado'); } catch(er){ toast(er.message, true); }
 });
+$('#bAtualizar').onclick = async () => {
+  await carregarVersao(true);
+  if (!versao || !versao.novidade){ toast(versao && versao.erro ? versao.erro : 'Já está na última versão.', !!(versao && versao.erro)); return; }
+  const lista = versao.novidades || [];
+  if (!await confirmar('Atualizar agora?', lista.length ? 'O que vem na versão nova:' : 'Tem uma versão nova no GitHub.', lista)) return;
+  $('#atualizando').classList.add('on'); clearTimeout(timer);
+  try { await api('/api/atualizar', {}); esperarVoltar(); }
+  catch(e){ $('#atualizando').classList.remove('on'); toast('Não consegui atualizar: ' + e.message, true); agendar(6000); }
+};
 document.querySelectorAll('[data-abrir]').forEach(b => b.onclick = () => api('/api/abrir', {alvo: b.dataset.abrir}).catch(e => toast(e.message, true)));
 $('#bSair').onclick = async () => {
   if (!await confirmar('Fechar o painel?', 'Só o painel desliga. A tarefa continua agendada normalmente.')) return;
@@ -427,7 +540,10 @@ $('#lista').addEventListener('click', async e => {
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#fundo').classList.contains('on')) $('#mNao').click(); });
 window.addEventListener('resize', () => status && renderModo());
 
-carregarStatus().then(carregarHistorico);
+carregarStatus().then(carregarHistorico).then(avisoAtualizacao);
+carregarVersao(false);
+setInterval(() => carregarVersao(false), 30 * 60 * 1000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) carregarVersao(false); });
 </script>
 </body>
 </html>

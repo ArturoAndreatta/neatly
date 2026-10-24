@@ -1,5 +1,7 @@
 ﻿# Instala (ou atualiza) o Organizador de Downloads para o usuario atual.
 # Nao precisa de administrador. Pode rodar de novo para atualizar: mantem config, historico e token.
+# -Atualizacao: chamado pelo botao Atualizar do painel (sem perguntas e sem abrir o navegador).
+param([switch]$Atualizacao, [string]$Commit)
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'comum.ps1')
 
@@ -61,7 +63,8 @@ if ($atualizando) {
     Info "Claude Code encontrado: $exe"
     Info 'Modo Claude: o Claude Haiku 5.5 organiza, usando sua assinatura do Claude.'
     Info 'Modo script: regras fixas por extensao, sem IA e sem gastar limite.'
-    if (Pergunta 'Usar o Claude?') { $cfg.modo = 'claude' } else { $cfg.modo = 'script' }
+    if ($Atualizacao) { $cfg.modo = 'claude' }
+    elseif (Pergunta 'Usar o Claude?') { $cfg.modo = 'claude' } else { $cfg.modo = 'script' }
   } else {
     Info 'Claude Code nao encontrado: usando o modo script (regras fixas, sem IA).'
     Info 'Se instalar o Claude Code depois, da para trocar no painel.'
@@ -106,7 +109,7 @@ foreach ($destino in (Join-Path $desktop 'Organizador de Downloads.lnk'), $menu)
 Ok 'area de trabalho e menu Iniciar: "Organizador de Downloads"'
 
 # 6. Token do Claude
-if ($cfg.modo -eq 'claude' -and -not (Test-Path -LiteralPath (Join-Path $dir 'token.dat'))) {
+if (-not $Atualizacao -and $cfg.modo -eq 'claude' -and -not (Test-Path -LiteralPath (Join-Path $dir 'token.dat'))) {
   Titulo 'Login do Claude'
   Info 'Para rodar sozinho todo dia, o Claude precisa de um token de 1 ano (oficial, gerado pelo Claude Code).'
   if (Pergunta 'Configurar agora?') {
@@ -116,8 +119,13 @@ if ($cfg.modo -eq 'claude' -and -not (Test-Path -LiteralPath (Join-Path $dir 'to
   }
 }
 
-# 7. Abre o painel
+# 7. Versao instalada (o botao Atualizar do painel compara com o GitHub)
+if (-not $Commit) { try { $Commit = (Invoke-GitHub 'commits/main').sha } catch {} }
+if ($Commit) { Set-VersaoLocal $Commit; Ok "versao $($Commit.Substring(0, 7))" }
+
+# 8. Abre o painel
 Start-ScheduledTask -TaskName $script:NomeTarefaPainel
+if ($Atualizacao) { exit 0 }
 Start-Sleep -Seconds 3
 Start-Process 'http://localhost:8765/'
 
