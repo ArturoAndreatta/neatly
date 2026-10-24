@@ -80,7 +80,7 @@ Describe 'Modo script' {
   It 'grava a rodada no historico com o destino de cada arquivo' {
     Novo-Arquivo $amb.Downloads 'musica.mp3' | Out-Null
     Rodar-Organizador | Should -Be 0
-    $h = Ler-Historico $amb
+    $h = @(Ler-Historico $amb)
     $h.Count | Should -Be 1
     $h[0].modo | Should -Be 'script'
     $h[0].status | Should -Be 'ok'
