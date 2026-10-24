@@ -1,4 +1,4 @@
-﻿# Instala (ou atualiza) o Organizador de Downloads para o usuario atual.
+﻿# Instala (ou atualiza) o Neatly para o usuario atual.
 # Nao precisa de administrador. Pode rodar de novo para atualizar: mantem config, historico e token.
 # -Atualizacao: chamado pelo botao Atualizar do painel (sem perguntas e sem abrir o navegador).
 param([switch]$Atualizacao, [string]$Commit)
@@ -17,7 +17,7 @@ function Pergunta($t, $padraoSim = $true) {
 
 Write-Host ''
 Write-Host '  ============================================' -ForegroundColor DarkCyan
-Write-Host '        Organizador de Downloads - Instalador' -ForegroundColor White
+Write-Host '              Neatly - Instalador' -ForegroundColor White
 Write-Host '  ============================================' -ForegroundColor DarkCyan
 
 $dir = $script:PastaApp
@@ -25,17 +25,31 @@ $atualizando = Test-Path -LiteralPath (Join-Path $dir 'config.json')
 
 # 1. Limpa instalacoes antigas (versao antes do repositorio)
 Titulo 'Preparando'
-foreach ($antiga in 'Organizar Downloads (Claude)', 'Painel Downloads (servidor)') {
+foreach ($antiga in $script:TarefasAntigas) {
   if (Get-ScheduledTask -TaskName $antiga -ErrorAction SilentlyContinue) {
     Unregister-ScheduledTask -TaskName $antiga -Confirm:$false
     Info "removida tarefa antiga: $antiga"
   }
 }
-Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" | Where-Object { $_.CommandLine -like '*OrganizadorDownloads*painel.ps1*' } |
+Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" | Where-Object { ($_.CommandLine -like '*\Neatly\painel.ps1*' -or $_.CommandLine -like '*OrganizadorDownloads*painel.ps1*') } |
   ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
 $desktop = [Environment]::GetFolderPath('Desktop')
-$lnkAntigo = Join-Path $desktop 'Painel Downloads.lnk'
-if (Test-Path -LiteralPath $lnkAntigo) { Remove-Item -LiteralPath $lnkAntigo -Force }
+foreach ($a in $script:AtalhosAntigos) {
+  foreach ($p in (Join-Path $desktop $a), (Join-Path ([Environment]::GetFolderPath('Programs')) $a)) {
+    if (Test-Path -LiteralPath $p) { Remove-Item -LiteralPath $p -Force }
+  }
+}
+# Instalacao antiga (OrganizadorDownloads): traz historico, configuracao e token para a pasta nova
+if ((Test-Path -LiteralPath $script:PastaAppAntiga) -and -not (Test-Path -LiteralPath $dir)) {
+  New-Item -ItemType Directory -Force -Path $dir | Out-Null
+  foreach ($f in 'historico.jsonl', 'config.json', 'token.dat', 'versao.json', 'claude-path.txt') {
+    $p = Join-Path $script:PastaAppAntiga $f
+    if (Test-Path -LiteralPath $p) { Copy-Item -LiteralPath $p -Destination (Join-Path $dir $f) -Force }
+  }
+  $atualizando = Test-Path -LiteralPath (Join-Path $dir 'config.json')
+  Remove-Item -LiteralPath $script:PastaAppAntiga -Recurse -Force -ErrorAction SilentlyContinue
+  Info 'historico e configuracao da versao antiga trazidos'
+}
 Ok 'pronto para instalar'
 
 # 2. Copia os arquivos
@@ -91,22 +105,22 @@ if ($existente) {
 $acaoPainel = New-ScheduledTaskAction -Execute 'wscript.exe' -Argument "`"$oculto`" `"$(Join-Path $dir 'painel.ps1')`" -SemAbrir"
 $gatilhoPainel = New-ScheduledTaskTrigger -AtLogOn -User "$env:USERDOMAIN\$env:USERNAME"
 $configPainel = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit ([TimeSpan]::Zero) -MultipleInstances IgnoreNew
-Register-ScheduledTask -TaskName $script:NomeTarefaPainel -Action $acaoPainel -Trigger $gatilhoPainel -Settings $configPainel -Description 'Mantem o painel do Organizador de Downloads no ar (http://localhost:8765)' -Force | Out-Null
+Register-ScheduledTask -TaskName $script:NomeTarefaPainel -Action $acaoPainel -Trigger $gatilhoPainel -Settings $configPainel -Description 'Mantem o painel do Neatly no ar (http://localhost:8765)' -Force | Out-Null
 Ok 'painel inicia sozinho quando voce entra no Windows'
 
 # 5. Atalhos
 Titulo 'Atalhos'
 $ws = New-Object -ComObject WScript.Shell
-$menu = Join-Path ([Environment]::GetFolderPath('Programs')) 'Organizador de Downloads.lnk'
-foreach ($destino in (Join-Path $desktop 'Organizador de Downloads.lnk'), $menu) {
+$menu = Join-Path ([Environment]::GetFolderPath('Programs')) 'Neatly.lnk'
+foreach ($destino in (Join-Path $desktop 'Neatly.lnk'), $menu) {
   $lnk = $ws.CreateShortcut($destino)
   $lnk.TargetPath = 'wscript.exe'
   $lnk.Arguments = "`"$(Join-Path $dir 'abrir-painel.vbs')`""
-  $lnk.IconLocation = "$env:SystemRoot\System32\imageres.dll,184"
-  $lnk.Description = 'Painel do Organizador de Downloads'
+  $lnk.IconLocation = "$(Join-Path $dir 'neatly.ico'),0"
+  $lnk.Description = 'Painel do Neatly'
   $lnk.Save()
 }
-Ok 'area de trabalho e menu Iniciar: "Organizador de Downloads"'
+Ok 'area de trabalho e menu Iniciar: "Neatly"'
 
 # 6. Token do Claude
 if (-not $Atualizacao -and $cfg.modo -eq 'claude' -and -not (Test-Path -LiteralPath (Join-Path $dir 'token.dat'))) {

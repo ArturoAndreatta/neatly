@@ -1,21 +1,21 @@
-﻿# Remove o Organizador de Downloads. Os arquivos ja organizados nos Downloads ficam onde estao.
+﻿# Remove o Neatly. Os arquivos ja organizados nos Downloads ficam onde estao.
 . (Join-Path $PSScriptRoot 'comum.ps1')
 
 Write-Host ''
-Write-Host '  Desinstalando o Organizador de Downloads...' -ForegroundColor Cyan
+Write-Host '  Desinstalando o Neatly...' -ForegroundColor Cyan
 
-foreach ($t in $script:NomeTarefa, $script:NomeTarefaPainel, 'Organizar Downloads (Claude)', 'Painel Downloads (servidor)') {
+foreach ($t in @($script:NomeTarefa, $script:NomeTarefaPainel) + $script:TarefasAntigas) {
   if (Get-ScheduledTask -TaskName $t -ErrorAction SilentlyContinue) {
     Unregister-ScheduledTask -TaskName $t -Confirm:$false
     Write-Host "  [ok] tarefa removida: $t" -ForegroundColor Green
   }
 }
-Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" | Where-Object { $_.CommandLine -like '*OrganizadorDownloads*painel.ps1*' } |
+Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" | Where-Object { ($_.CommandLine -like '*\Neatly\painel.ps1*' -or $_.CommandLine -like '*OrganizadorDownloads*painel.ps1*') } |
   ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
 Write-Host '  [ok] painel desligado' -ForegroundColor Green
 
 $desktop = [Environment]::GetFolderPath('Desktop')
-foreach ($lnk in (Join-Path $desktop 'Organizador de Downloads.lnk'), (Join-Path $desktop 'Painel Downloads.lnk'), (Join-Path ([Environment]::GetFolderPath('Programs')) 'Organizador de Downloads.lnk')) {
+foreach ($lnk in @('Neatly.lnk') + $script:AtalhosAntigos | ForEach-Object { (Join-Path $desktop $_); (Join-Path ([Environment]::GetFolderPath('Programs')) $_) }) {
   if (Test-Path -LiteralPath $lnk) { Remove-Item -LiteralPath $lnk -Force }
 }
 Write-Host '  [ok] atalhos removidos' -ForegroundColor Green

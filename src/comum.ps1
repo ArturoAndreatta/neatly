@@ -1,15 +1,19 @@
-﻿# Funcoes compartilhadas pelo organizador e pelo painel.
+﻿# Neatly: funcoes compartilhadas pelo organizador e pelo painel.
 
-$script:PastaApp = Join-Path $env:LOCALAPPDATA 'OrganizadorDownloads'
+$script:PastaApp = Join-Path $env:LOCALAPPDATA 'Neatly'
+$script:PastaAppAntiga = Join-Path $env:LOCALAPPDATA 'OrganizadorDownloads'
 $script:Utf8 = New-Object System.Text.UTF8Encoding($false)
-$script:NomeTarefa = 'Organizar Downloads'
-$script:NomeTarefaPainel = 'Organizar Downloads - Painel'
-$script:Repo = 'ArturoAndreatta/organizador-downloads'
+$script:NomeTarefa = 'Neatly'
+$script:NomeTarefaPainel = 'Neatly - Painel'
+$script:Repo = 'ArturoAndreatta/neatly'
+# Tarefas e atalhos de versoes antigas (antes de virar Neatly), removidos ao instalar
+$script:TarefasAntigas = 'Organizar Downloads', 'Organizar Downloads - Painel', 'Organizar Downloads (Claude)', 'Painel Downloads (servidor)'
+$script:AtalhosAntigos = 'Organizador de Downloads.lnk', 'Painel Downloads.lnk'
 
 function Get-PastaDownloads {
   # Pasta Downloads real do usuario (funciona mesmo se ela foi movida, ex: OneDrive)
-  # ORGANIZADOR_DOWNLOADS troca a pasta (usado pelos testes)
-  if ($env:ORGANIZADOR_DOWNLOADS) { return $env:ORGANIZADOR_DOWNLOADS }
+  # NEATLY_DOWNLOADS troca a pasta (usado pelos testes)
+  if ($env:NEATLY_DOWNLOADS) { return $env:NEATLY_DOWNLOADS }
   try {
     $p = (New-Object -ComObject Shell.Application).NameSpace('shell:Downloads').Self.Path
     if ($p -and (Test-Path -LiteralPath $p)) { return $p }
@@ -129,7 +133,7 @@ function Invoke-GitHub($caminho) {
   # API publica do GitHub (sem login: funciona com o repositorio publico, ate 60 consultas por hora)
   [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
   return Invoke-RestMethod "https://api.github.com/repos/$($script:Repo)/$caminho" -TimeoutSec 15 -UseBasicParsing `
-    -Headers @{ 'User-Agent' = 'organizador-downloads'; 'Accept' = 'application/vnd.github+json' }
+    -Headers @{ 'User-Agent' = 'neatly'; 'Accept' = 'application/vnd.github+json' }
 }
 
 function Get-VersaoLocal {

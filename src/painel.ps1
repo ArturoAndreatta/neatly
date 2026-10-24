@@ -1,4 +1,4 @@
-﻿# Painel local do Organizador de Downloads em http://localhost:8765
+﻿# Painel local do Neatly em http://localhost:8765
 # Inicia escondido no logon (-SemAbrir) e fica sempre no ar. O atalho so abre o navegador.
 param([switch]$SemAbrir)
 $ErrorActionPreference = 'Stop'
@@ -118,7 +118,7 @@ function Versao([bool]$forcar) {
 function Atualizar {
   $v = Versao $true
   if (-not $v.sha) { throw ($(if ($v.erro) { $v.erro } else { 'Versão do GitHub indisponível' })) }
-  $temp = Join-Path $env:TEMP "organizador-downloads-$($v.remoto)"
+  $temp = Join-Path $env:TEMP "neatly-$($v.remoto)"
   $zip = "$temp.zip"
   if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Recurse -Force }
   [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12

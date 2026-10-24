@@ -7,10 +7,10 @@ BeforeAll {
     $raiz = Join-Path ([IO.Path]::GetTempPath()) ('org-teste-' + [guid]::NewGuid().ToString('N'))
     $dl = Join-Path $raiz 'Downloads'
     $app = Join-Path $raiz 'Local'
-    New-Item -ItemType Directory -Force -Path $dl, (Join-Path $app 'OrganizadorDownloads') | Out-Null
-    $env:ORGANIZADOR_DOWNLOADS = $dl
+    New-Item -ItemType Directory -Force -Path $dl, (Join-Path $app 'Neatly') | Out-Null
+    $env:NEATLY_DOWNLOADS = $dl
     $env:LOCALAPPDATA = $app
-    return [pscustomobject]@{ Raiz = $raiz; Downloads = $dl; App = (Join-Path $app 'OrganizadorDownloads') }
+    return [pscustomobject]@{ Raiz = $raiz; Downloads = $dl; App = (Join-Path $app 'Neatly') }
   }
 
   function Novo-Arquivo($pasta, $nome, [int]$minutosAtras = 60) {
@@ -21,7 +21,7 @@ BeforeAll {
     return $p
   }
 
-  function Rodar-Organizador {
+  function Rodar-Neatly {
     & $script:shell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $script:src 'organizar.ps1') | Out-Null
     return $LASTEXITCODE
   }
@@ -39,7 +39,7 @@ Describe 'Modo script' {
     Novo-Arquivo $amb.Downloads 'foto.png' | Out-Null
     Novo-Arquivo $amb.Downloads 'contrato.pdf' | Out-Null
     Novo-Arquivo $amb.Downloads 'setup.exe' | Out-Null
-    Rodar-Organizador | Should -Be 0
+    Rodar-Neatly | Should -Be 0
     Join-Path $amb.Downloads 'Imagens\foto.png' | Should -Exist
     Join-Path $amb.Downloads 'Documentos\contrato.pdf' | Should -Exist
     Join-Path $amb.Downloads 'Instaladores\setup.exe' | Should -Exist
@@ -47,7 +47,7 @@ Describe 'Modo script' {
 
   It 'nunca mexe em arquivos com cara de segredo' {
     foreach ($n in '.env', 'chave.pem', 'servidor.key', 'meu-firebase-adminsdk-x.json', 'credentials.json') { Novo-Arquivo $amb.Downloads $n | Out-Null }
-    Rodar-Organizador | Should -Be 0
+    Rodar-Neatly | Should -Be 0
     foreach ($n in '.env', 'chave.pem', 'servidor.key', 'meu-firebase-adminsdk-x.json', 'credentials.json') {
       Join-Path $amb.Downloads $n | Should -Exist
     }
@@ -56,14 +56,14 @@ Describe 'Modo script' {
   It 'nao sobrescreve: arquivo com o mesmo nome ganha (1)' {
     Novo-Arquivo (Join-Path $amb.Downloads 'Imagens') 'foto.png' | Out-Null
     Novo-Arquivo $amb.Downloads 'foto.png' | Out-Null
-    Rodar-Organizador | Should -Be 0
+    Rodar-Neatly | Should -Be 0
     Join-Path $amb.Downloads 'Imagens\foto.png' | Should -Exist
     Join-Path $amb.Downloads 'Imagens\foto (1).png' | Should -Exist
   }
 
   It 'espera a proxima rodada para arquivo mexido agora' {
     Novo-Arquivo $amb.Downloads 'baixando.zip' 1 | Out-Null
-    Rodar-Organizador | Should -Be 0
+    Rodar-Neatly | Should -Be 0
     Join-Path $amb.Downloads 'baixando.zip' | Should -Exist
   }
 
@@ -71,7 +71,7 @@ Describe 'Modo script' {
     Novo-Arquivo $amb.Downloads 'sem-extensao' | Out-Null
     Novo-Arquivo $amb.Downloads 'arquivo.xyz' | Out-Null
     Novo-Arquivo (Join-Path $amb.Downloads 'Projeto') 'dentro.pdf' | Out-Null
-    Rodar-Organizador | Should -Be 0
+    Rodar-Neatly | Should -Be 0
     Join-Path $amb.Downloads 'sem-extensao' | Should -Exist
     Join-Path $amb.Downloads 'arquivo.xyz' | Should -Exist
     Join-Path $amb.Downloads 'Projeto\dentro.pdf' | Should -Exist
@@ -79,7 +79,7 @@ Describe 'Modo script' {
 
   It 'grava a rodada no historico com o destino de cada arquivo' {
     Novo-Arquivo $amb.Downloads 'musica.mp3' | Out-Null
-    Rodar-Organizador | Should -Be 0
+    Rodar-Neatly | Should -Be 0
     $h = @(Ler-Historico $amb)
     $h.Count | Should -Be 1
     $h[0].modo | Should -Be 'script'

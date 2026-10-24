@@ -1,12 +1,12 @@
 ﻿# Instalacao em uma linha:
-#   irm https://raw.githubusercontent.com/ArturoAndreatta/organizador-downloads/main/instalar-web.ps1 | iex
+#   irm https://raw.githubusercontent.com/ArturoAndreatta/neatly/main/instalar-web.ps1 | iex
 $ErrorActionPreference = 'Stop'
-$zip = Join-Path $env:TEMP 'organizador-downloads.zip'
-$pasta = Join-Path $env:TEMP 'organizador-downloads'
-Write-Host 'Baixando o Organizador de Downloads...' -ForegroundColor Cyan
+$zip = Join-Path $env:TEMP 'neatly.zip'
+$pasta = Join-Path $env:TEMP 'neatly'
+Write-Host 'Baixando o Neatly...' -ForegroundColor Cyan
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-$commit = (Invoke-RestMethod 'https://api.github.com/repos/ArturoAndreatta/organizador-downloads/commits/main' -Headers @{ 'User-Agent' = 'organizador-downloads' } -UseBasicParsing).sha
-Invoke-WebRequest "https://codeload.github.com/ArturoAndreatta/organizador-downloads/zip/$commit" -OutFile $zip -UseBasicParsing
+$commit = (Invoke-RestMethod 'https://api.github.com/repos/ArturoAndreatta/neatly/commits/main' -Headers @{ 'User-Agent' = 'neatly' } -UseBasicParsing).sha
+Invoke-WebRequest "https://codeload.github.com/ArturoAndreatta/neatly/zip/$commit" -OutFile $zip -UseBasicParsing
 if (Test-Path $pasta) { Remove-Item $pasta -Recurse -Force }
 Expand-Archive -LiteralPath $zip -DestinationPath $pasta -Force
 $src = Get-ChildItem -LiteralPath $pasta -Directory | Select-Object -First 1

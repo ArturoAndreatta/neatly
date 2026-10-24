@@ -1,5 +1,5 @@
 @echo off
-title Organizador de Downloads - Instalador
+title Neatly - Instalador
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0src\instalar.ps1"
 echo.
 pause
