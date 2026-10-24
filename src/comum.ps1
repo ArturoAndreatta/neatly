@@ -8,6 +8,8 @@ $script:Repo = 'ArturoAndreatta/organizador-downloads'
 
 function Get-PastaDownloads {
   # Pasta Downloads real do usuario (funciona mesmo se ela foi movida, ex: OneDrive)
+  # ORGANIZADOR_DOWNLOADS troca a pasta (usado pelos testes)
+  if ($env:ORGANIZADOR_DOWNLOADS) { return $env:ORGANIZADOR_DOWNLOADS }
   try {
     $p = (New-Object -ComObject Shell.Application).NameSpace('shell:Downloads').Self.Path
     if ($p -and (Test-Path -LiteralPath $p)) { return $p }

@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  testes:
+    name: Testes no Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar Pester e PSScriptAnalyzer
+        shell: powershell
+        run: |
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Install-Module Pester -MinimumVersion 5.5 -Force -SkipPublisherCheck -Scope CurrentUser
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+
+      - name: Analisar os scripts
+        shell: powershell
+        run: |
+          $erros = Invoke-ScriptAnalyzer -Path ./src, ./instalar-web.ps1 -Recurse -Severity Error
+          $erros | Format-Table -AutoSize
+          if ($erros) { exit 1 }
+
+      - name: Testes (Windows PowerShell 5.1, o que o usuario tem)
+        shell: powershell
+        run: |
+          Import-Module Pester -MinimumVersion 5.5
+          $r = Invoke-Pester ./tests -Output Detailed -PassThru
+          if ($r.FailedCount -gt 0) { exit 1 }
+
+      - name: Testes (PowerShell 7)
+        shell: pwsh
+        run: |
+          Import-Module Pester -MinimumVersion 5.5
+          $r = Invoke-Pester ./tests -Output Detailed -PassThru
+          if ($r.FailedCount -gt 0) { exit 1 }
