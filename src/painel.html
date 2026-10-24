@@ -5,545 +5,497 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Organizador de Downloads</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#0c0e12; --bg2:#12151b; --card:#161a21; --card2:#1c212a; --borda:#262c37;
-  --txt:#e8ebf1; --txt2:#9aa3b2; --txt3:#6b7383;
-  --acc:#4fd1a5; --acc2:#2a9d77; --accbg:rgba(79,209,165,.12);
-  --warn:#f5b84b; --warnbg:rgba(245,184,75,.12);
-  --err:#f26d6d; --errbg:rgba(242,109,109,.12);
-  --info:#7aa7ff; --infobg:rgba(122,167,255,.12);
-  --raio:14px; --ease:cubic-bezier(.2,.8,.2,1);
-  --mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+  --chao:#0d0e10; --gaveta:#141518; --gaveta2:#1a1c20; --vinco:rgba(255,255,255,.07);
+  --tinta:#ececee; --tinta2:#a1a4ab; --tinta3:#6c7078; --tinta4:#4a4e55;
+  --menta:#5fd4a8; --menta-fundo:rgba(95,212,168,.1); --alerta:#e8b45a; --erro:#ef7b7b;
+  --ease:cubic-bezier(.23,1,.32,1); --mover:cubic-bezier(.77,0,.175,1);
+  --sans:"Geist","Segoe UI",system-ui,sans-serif; --mono:"Geist Mono",ui-monospace,Consolas,monospace;
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-html,body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.5 Inter,system-ui,Segoe UI,sans-serif}
-body{min-height:100vh;background:radial-gradient(1200px 500px at 85% -10%,rgba(79,209,165,.08),transparent 60%),var(--bg)}
-.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 60px}
-button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
-button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+html,body{margin:0;background:var(--chao);color:var(--tinta);font:14px/1.5 var(--sans);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+button:focus-visible,input:focus-visible{outline:2px solid var(--menta);outline-offset:3px;border-radius:6px}
+.wrap{max-width:680px;margin:0 auto;padding:32px 24px 96px}
 
-.topo{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:24px}
-.logo{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#06140f;box-shadow:0 6px 24px rgba(79,209,165,.25)}
-.titulo h1{margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em}
-.titulo p{margin:0;color:var(--txt2);font-size:13px}
-.espaco{flex:1}
-.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;font-weight:600;font-size:12.5px;transition:background .3s var(--ease),color .3s var(--ease)}
-.pill .ponto{width:8px;height:8px;border-radius:50%;background:currentColor}
-.pill.ativa{background:var(--accbg);color:var(--acc)}
-.pill.pausada{background:var(--warnbg);color:var(--warn)}
-.pill.rodando{background:var(--infobg);color:var(--info)}
-.pill.rodando .ponto{animation:pulso 1.2s ease-in-out infinite}
-.pill.ausente{background:var(--errbg);color:var(--err)}
-@keyframes pulso{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.6);opacity:.4}}
+.topo{display:flex;align-items:center;gap:14px;height:40px}
+.marca{display:flex;align-items:center;gap:10px;color:var(--tinta2);font-weight:500;font-size:13px}
+.marca i{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;background:var(--menta);color:#0b1712}
+.marca i svg{width:13px;height:13px}
+.esp{flex:1}
+.icone-btn{position:relative;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:var(--tinta3);transition:background .15s,color .15s,transform .12s var(--ease)}
+.icone-btn:hover{background:var(--gaveta);color:var(--tinta)}
+.icone-btn:active{transform:scale(.95)}
+.icone-btn svg{width:18px;height:18px}
+.icone-btn .ponto{position:absolute;top:8px;right:8px;width:7px;height:7px;border-radius:50%;background:var(--menta);box-shadow:0 0 0 2px var(--chao)}
+.chave{width:36px;height:22px;border-radius:999px;background:var(--gaveta2);position:relative;transition:background .2s var(--ease)}
+.chave::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--tinta3);transition:transform .25s var(--ease),background .2s}
+.chave[aria-checked="true"]{background:var(--menta-fundo)}
+.chave[aria-checked="true"]::after{transform:translateX(14px);background:var(--menta)}
+.chave:disabled{opacity:.4;cursor:default}
 
-.switch{display:inline-flex;align-items:center;gap:10px;color:var(--txt2);font-weight:500}
-.switch .trilho{width:46px;height:26px;border-radius:999px;background:var(--borda);position:relative;transition:background .25s var(--ease)}
-.switch .bola{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.4);transition:transform .25s var(--ease)}
-.switch[aria-checked="true"] .trilho{background:var(--acc2)}
-.switch[aria-checked="true"] .bola{transform:translateX(20px)}
-.switch:disabled{opacity:.5;cursor:not-allowed}
-
-.aviso-topo{display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s var(--ease),margin .35s var(--ease)}
-.aviso-topo.on{grid-template-rows:1fr;margin-bottom:16px}
-.aviso-topo>div{overflow:hidden}
-.aviso-topo p{margin:0;padding:12px 16px;border-radius:var(--raio);background:var(--warnbg);color:var(--warn);font-size:13px;border:1px solid rgba(245,184,75,.25)}
-
-.grade{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
-@media (max-width:860px){.grade{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:480px){.grade{grid-template-columns:1fr}}
-.card{background:var(--card);border:1px solid var(--borda);border-radius:var(--raio);padding:16px;animation:entra .5s var(--ease) both}
-.grade .card:nth-child(2){animation-delay:.05s}.grade .card:nth-child(3){animation-delay:.1s}.grade .card:nth-child(4){animation-delay:.15s}
-@keyframes entra{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.rotulo{color:var(--txt3);font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
-.valor{font-size:22px;font-weight:700;margin-top:6px;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
-.sub{color:var(--txt2);font-size:12.5px;margin-top:2px}
-.ok{color:var(--acc)}.erro{color:var(--err)}
-
-.barra{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--card);border:1px solid var(--borda);border-radius:var(--raio);padding:12px;margin-bottom:24px}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:10px;background:var(--card2);border:1px solid var(--borda);font-weight:500;transition:transform .12s var(--ease),background .2s,border-color .2s}
-.btn:hover{background:#232935;border-color:#323a48}
-.btn:active{transform:scale(.97)}
-.btn.prim{background:var(--acc);color:#06140f;border-color:transparent;font-weight:600}
-.btn.prim:hover{background:#63dcb3}
-.btn.perigo{color:var(--err)}
-.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.btn svg{width:16px;height:16px}
-.grupo{display:inline-flex;align-items:center;gap:8px;padding:4px 4px 4px 12px;border-radius:10px;background:var(--card2);border:1px solid var(--borda)}
-.grupo>label,.grupo>span.l{color:var(--txt2);font-size:13px}
-.grupo input{background:transparent;border:0;color:var(--txt);font:600 14px var(--mono);color-scheme:dark;width:118px}
-.grupo .btn{padding:6px 10px}
-.seg{position:relative;display:inline-flex;background:var(--bg2);border-radius:8px;padding:3px}
-.seg button{position:relative;z-index:1;padding:5px 12px;font-size:13px;font-weight:600;color:var(--txt2);border-radius:6px;transition:color .25s var(--ease)}
-.seg button[aria-pressed="true"]{color:#06140f}
-.seg button:disabled{opacity:.45;cursor:not-allowed}
-.seg .marcador{position:absolute;top:3px;bottom:3px;left:3px;border-radius:6px;background:var(--acc);transition:transform .3s var(--ease),width .3s var(--ease)}
-.giro{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:gira .7s linear infinite}
+.destaque{padding:72px 0 56px}
+.olho{font-size:13px;color:var(--tinta3);margin:0 0 10px}
+h1{margin:0;font-size:44px;line-height:1.08;font-weight:600;letter-spacing:-.035em;text-wrap:balance}
+h1 .num{font-variant-numeric:tabular-nums}
+.linha-sub{margin:14px 0 0;font-size:15px;color:var(--tinta2);text-wrap:pretty}
+.linha-sub b{font-weight:500;color:var(--tinta)}
+.monte{display:flex;flex-wrap:wrap;gap:6px;margin-top:22px}
+.monte:empty{display:none}
+.monte span{font:12px var(--mono);color:var(--tinta3);background:var(--gaveta);padding:5px 9px;border-radius:7px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;animation:cai .4s var(--ease) both}
+@keyframes cai{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.acoes{display:flex;align-items:center;gap:16px;margin-top:32px}
+.prim{height:42px;padding:0 20px;border-radius:999px;background:var(--tinta);color:var(--chao);font-weight:500;display:inline-flex;align-items:center;gap:9px;transition:transform .12s var(--ease),opacity .2s,background .2s}
+.prim:hover{background:#fff}
+.prim:active{transform:scale(.97)}
+.prim:disabled{opacity:.55;cursor:default;transform:none}
+.prim svg{width:14px;height:14px}
+.giro{width:13px;height:13px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:gira .7s linear infinite}
 @keyframes gira{to{transform:rotate(360deg)}}
+.aviso{margin-top:22px;font-size:13px;color:var(--alerta)}
+.aviso button{color:var(--tinta);text-decoration:underline;text-underline-offset:3px;margin-left:6px}
 
-.secoes{display:grid;grid-template-columns:1.7fr 1fr;gap:16px;align-items:start}
-@media (max-width:860px){.secoes{grid-template-columns:1fr}}
-.secao h2{font-size:15px;margin:0 0 12px;display:flex;align-items:center;gap:8px}
-.secao h2 .cont{color:var(--txt3);font-weight:500;font-size:13px}
-
-.filtros{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-.chip{padding:6px 12px;border-radius:999px;border:1px solid var(--borda);background:var(--card);color:var(--txt2);font-size:12.5px;font-weight:500;transition:all .2s var(--ease)}
-.chip[aria-pressed="true"]{background:var(--accbg);color:var(--acc);border-color:transparent}
-.busca{flex:1;min-width:160px;display:flex;align-items:center;gap:8px;padding:0 12px;border-radius:999px;border:1px solid var(--borda);background:var(--card)}
-.busca input{flex:1;background:transparent;border:0;color:var(--txt);font:inherit;padding:7px 0;outline:none}
-.busca svg{width:14px;height:14px;color:var(--txt3)}
-
-.item{background:var(--card);border:1px solid var(--borda);border-radius:var(--raio);margin-bottom:10px;overflow:hidden;transition:border-color .2s;animation:entra .4s var(--ease) both}
-.item:hover{border-color:#323a48}
-.item.aberto{border-color:#3a4252}
-.cab{width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;text-align:left}
-.icone{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:none}
-.icone.ok{background:var(--accbg)}.icone.erro{background:var(--errbg)}.icone.desf{background:var(--warnbg);color:var(--warn)}
-.icone svg{width:17px;height:17px}
-.cab .meio{flex:1;min-width:0}
-.cab .l1{font-weight:600;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.cab .l2{color:var(--txt2);font-size:12.5px}
-.tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--card2);color:var(--txt2);border:1px solid var(--borda)}
-.tag.manual{color:var(--info);background:var(--infobg);border-color:transparent}
-.tag.desf{color:var(--warn);background:var(--warnbg);border-color:transparent}
-.tag.err{color:var(--err);background:var(--errbg);border-color:transparent}
-.num{font:600 15px var(--mono);color:var(--txt);text-align:right}
-.num small{display:block;font:500 11px Inter,sans-serif;color:var(--txt3)}
-.seta{width:18px;height:18px;color:var(--txt3);transition:transform .3s var(--ease)}
-.item.aberto .seta{transform:rotate(180deg)}
-.corpo{display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s var(--ease)}
+.cab-sec{display:flex;align-items:center;gap:10px;height:36px;margin-bottom:6px}
+.cab-sec h2{margin:0;font-size:13px;font-weight:500;color:var(--tinta3)}
+.busca{display:flex;align-items:center;gap:2px;margin-left:auto;height:32px;border-radius:9px;color:var(--tinta3);transition:background .2s var(--ease)}
+.busca.aberta{background:var(--gaveta)}
+.busca input{width:0;opacity:0;padding:0;background:transparent;border:0;outline:0;color:var(--tinta);font:inherit;font-size:13px;transition:width .3s var(--ease),opacity .2s,padding .3s var(--ease)}
+.busca.aberta input{width:200px;opacity:1;padding-left:12px}
+.busca .icone-btn{width:32px;height:32px}
+.lista{border-top:1px solid var(--vinco)}
+.item{border-bottom:1px solid var(--vinco)}
+.lin{width:100%;display:grid;grid-template-columns:130px 1fr auto 16px;align-items:center;gap:16px;padding:15px 4px;text-align:left;border-radius:8px;transition:background .15s}
+.lin:hover{background:rgba(255,255,255,.02)}
+.quando{color:var(--tinta2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.oque{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.oque small{color:var(--tinta3);font-size:13px;margin-left:8px}
+.marca-st{font-size:12px;color:var(--tinta3)}
+.marca-st.erro{color:var(--erro)}
+.marca-st.desf{color:var(--alerta)}
+.seta{width:14px;height:14px;color:var(--tinta4);transition:transform .3s var(--ease)}
+.item.aberto .seta{transform:rotate(90deg)}
+.corpo{display:grid;grid-template-rows:0fr;transition:grid-template-rows .32s var(--ease)}
 .item.aberto .corpo{grid-template-rows:1fr}
 .corpo>div{overflow:hidden}
-.det{padding:0 16px 16px;border-top:1px solid var(--borda);opacity:0;transform:translateY(-4px);transition:opacity .3s var(--ease) .05s,transform .3s var(--ease) .05s}
+.det{padding:2px 4px 20px 150px;opacity:0;transform:translateY(-3px);transition:opacity .25s var(--ease),transform .25s var(--ease)}
 .item.aberto .det{opacity:1;transform:none}
-.meta{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:14px 0}
-@media (max-width:560px){.meta{grid-template-columns:repeat(2,1fr)}}
-.meta div{background:var(--bg2);border-radius:10px;padding:10px}
-.meta b{display:block;font:600 14px var(--mono);margin-top:2px}
-.resumo{background:var(--bg2);border-left:3px solid var(--acc2);border-radius:8px;padding:10px 12px;color:var(--txt2);font-size:13px;white-space:pre-wrap;word-break:break-word;margin-bottom:12px}
-.resumo.err{border-left-color:var(--err)}
-.resumo.dica-login{border-left-color:var(--warn);color:var(--txt)}
-.arquivos{list-style:none;margin:0;padding:0;max-height:300px;overflow:auto;border:1px solid var(--borda);border-radius:10px}
-.arquivos li{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--borda);font-size:13px}
-.arquivos li:last-child{border-bottom:0}
-.arquivos li:hover{background:var(--card2)}
-.arquivos .nome{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono);font-size:12.5px}
-.arquivos .p{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:6px;background:var(--card2);color:var(--txt2);white-space:nowrap}
-.arquivos .tam{color:var(--txt3);font:12px var(--mono);white-space:nowrap}
-.arquivos mark{background:rgba(79,209,165,.25);color:var(--txt);border-radius:3px}
-.mini{padding:4px 8px;border-radius:6px;color:var(--txt3);font-size:12px;transition:color .2s,background .2s}
-.mini:hover{color:var(--txt);background:var(--card2)}
-.acoesdet{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
-
-.lado .card{margin-bottom:16px}
-.lado h2{font-size:15px;margin:0 0 14px}
-.barras{display:flex;flex-direction:column;gap:10px}
-.barras .linha{display:grid;grid-template-columns:96px 1fr 40px;gap:10px;align-items:center;font-size:13px}
-.barras .trilho{height:8px;background:var(--bg2);border-radius:999px;overflow:hidden}
-.barras .enche{height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,var(--acc2),var(--acc));transition:width .8s var(--ease)}
-.barras .q{font:600 12.5px var(--mono);text-align:right;color:var(--txt2)}
-.fila{list-style:none;margin:0;padding:0;max-height:240px;overflow:auto}
-.fila li{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--borda);font-size:12.5px}
-.fila li:last-child{border-bottom:0}
-.fila .nome{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono)}
-.fila .p{color:var(--txt3);font-size:11.5px}
-.vazio{color:var(--txt3);text-align:center;padding:28px 12px;font-size:13px}
-.vazio svg{width:28px;height:28px;display:block;margin:0 auto 8px;opacity:.6}
-.dica{color:var(--txt3);font-size:12px;margin-top:10px}
-
-.fundo{position:fixed;inset:0;background:rgba(5,7,10,.6);backdrop-filter:blur(4px);display:grid;place-items:center;opacity:0;pointer-events:none;transition:opacity .25s var(--ease);z-index:20}
-.fundo.on{opacity:1;pointer-events:auto}
-.modal{background:var(--card);border:1px solid var(--borda);border-radius:16px;padding:22px;width:min(420px,calc(100vw - 32px));transform:scale(.95) translateY(8px);transition:transform .3s var(--ease)}
-.fundo.on .modal{transform:none}
-.modal h3{margin:0 0 6px;font-size:16px}
-.modal p{margin:0 0 18px;color:var(--txt2)}
-.modal .acoesdet{margin:0}
-.toasts{position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:8px;z-index:30}
-.toast{background:var(--card2);border:1px solid var(--borda);border-left:3px solid var(--acc);border-radius:10px;padding:10px 14px;min-width:240px;max-width:360px;box-shadow:0 10px 30px rgba(0,0,0,.4);animation:toastin .35s var(--ease) both}
-.toast.err{border-left-color:var(--err)}
-.toast.sai{animation:toastout .3s var(--ease) both}
-@keyframes toastin{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
-@keyframes toastout{to{opacity:0;transform:translateX(20px)}}
-.skel{height:64px;border-radius:var(--raio);margin-bottom:10px;background:linear-gradient(90deg,var(--card) 0%,var(--card2) 50%,var(--card) 100%);background-size:200% 100%;animation:brilho 1.2s linear infinite}
+.arqs{list-style:none;margin:0;padding:0}
+.arqs li{display:flex;align-items:center;gap:10px;padding:5px 0;font-size:13px}
+.arqs .n{font-family:var(--mono);font-size:12.5px;color:var(--tinta2);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.arqs .p{color:var(--tinta3);white-space:nowrap}
+.arqs .p::before{content:'\2192  ';color:var(--tinta4)}
+.arqs button{margin-left:auto;font-size:12px;color:var(--tinta4);opacity:0;transition:opacity .15s,color .15s}
+.arqs li:hover button,.arqs button:focus-visible{opacity:1}
+.arqs button:hover{color:var(--tinta)}
+.arqs mark{background:var(--menta-fundo);color:var(--tinta);border-radius:3px}
+.resumo{margin:0 0 12px;font-size:13px;color:var(--tinta2);white-space:pre-wrap;word-break:break-word}
+.resumo.erro{color:var(--erro)}
+.rodape-det{display:flex;align-items:center;gap:14px;margin-top:14px;font-size:12px;color:var(--tinta3)}
+.txt-btn{font-size:13px;color:var(--tinta2);transition:color .15s}
+.txt-btn:hover{color:var(--tinta)}
+.mais{display:block;margin:18px auto 0;font-size:13px;color:var(--tinta3)}
+.mais:hover{color:var(--tinta)}
+.vazio{padding:40px 4px;color:var(--tinta3);font-size:14px}
+.numeros{display:flex;align-items:center;gap:6px;margin-top:40px;font-size:13px;color:var(--tinta3)}
+.numeros b{color:var(--tinta2);font-weight:500;font-variant-numeric:tabular-nums}
+.numeros button{margin-left:auto}
+.skel{height:53px;border-bottom:1px solid var(--vinco);background:linear-gradient(90deg,transparent,rgba(255,255,255,.025),transparent);background-size:200% 100%;animation:brilho 1.4s linear infinite}
 @keyframes brilho{to{background-position:-200% 0}}
-.btn.novo{position:relative;border-color:rgba(122,167,255,.45);color:var(--info)}
-.btn.novo .ponto-novo{width:8px;height:8px;border-radius:50%;background:var(--info);box-shadow:0 0 0 0 rgba(122,167,255,.6);animation:chama 1.8s ease-out infinite}
-@keyframes chama{0%{box-shadow:0 0 0 0 rgba(122,167,255,.6)}70%{box-shadow:0 0 0 8px rgba(122,167,255,0)}100%{box-shadow:0 0 0 0 rgba(122,167,255,0)}}
-.btn-sumir{display:none}
-.novidades{list-style:none;margin:0 0 18px;padding:0;max-height:240px;overflow:auto;border:1px solid var(--borda);border-radius:10px}
-.novidades li{padding:8px 12px;border-bottom:1px solid var(--borda);font-size:13px;color:var(--txt2)}
-.novidades li:last-child{border-bottom:0}
-.novidades li::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--acc);margin-right:10px;vertical-align:middle}
-.rodape{margin-top:28px;text-align:center;color:var(--txt3);font-size:12px}
-.rodape a{color:var(--txt2)}
-.atualizando{position:fixed;inset:0;display:grid;place-items:center;background:rgba(12,14,18,.92);backdrop-filter:blur(6px);z-index:45;opacity:0;pointer-events:none;transition:opacity .3s var(--ease)}
-.atualizando.on{opacity:1;pointer-events:auto}
-.atualizando .caixa{text-align:center;color:var(--txt2)}
-.atualizando .caixa h2{color:var(--txt);margin:14px 0 4px;font-size:18px}
-.atualizando .giro{width:28px;height:28px;border-width:3px;margin:0 auto;color:var(--acc)}
-.lim-grade{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.lim-grade>div{background:var(--bg2);border-radius:10px;padding:10px}
-.lim-grade b{display:block;font:700 18px var(--mono);margin-top:2px}
-.lim-grade small{color:var(--txt3);font-size:11.5px}
-.dias{display:flex;align-items:flex-end;gap:6px;height:64px;margin-top:14px;padding:0 2px}
-.dias .d{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
-.dias .b{width:100%;max-width:26px;border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,var(--acc),var(--acc2));height:0;transition:height .8s var(--ease);min-height:2px;opacity:.9}
-.dias .b.zero{background:var(--borda)}
-.dias .l{font-size:10.5px;color:var(--txt3)}
-.limite-run{display:flex;flex-wrap:wrap;gap:8px;margin:-4px 0 12px}
-.limite-run span{font:12px var(--mono);padding:4px 10px;border-radius:8px;background:var(--bg2);color:var(--txt2)}
-.limite-run span b{color:var(--txt)}
-.limite-run span.reset{font-family:Inter,sans-serif;color:var(--warn);background:var(--warnbg)}
-.desligado{position:fixed;inset:0;display:none;place-items:center;background:var(--bg);z-index:40;text-align:center;color:var(--txt2)}
-.desligado.on{display:grid}
+
+.veu{position:fixed;inset:0;background:rgba(5,6,8,.55);opacity:0;pointer-events:none;transition:opacity .25s var(--ease);z-index:20}
+.veu.on{opacity:1;pointer-events:auto}
+.lateral{position:fixed;top:0;right:0;bottom:0;width:min(400px,100vw);background:var(--gaveta);box-shadow:0 0 0 1px var(--vinco);transform:translateX(102%);transition:transform .35s var(--ease);z-index:21;display:flex;flex-direction:column}
+.lateral.on{transform:none}
+.lateral header{display:flex;align-items:center;height:64px;padding:0 12px 0 24px;font-weight:500}
+.lateral .rolo{flex:1;overflow:auto;padding:4px 24px 32px}
+.grupo{padding:18px 0;border-top:1px solid var(--vinco)}
+.grupo:first-child{border-top:0;padding-top:4px}
+.grupo h3{margin:0 0 10px;font-size:12px;font-weight:500;color:var(--tinta3)}
+.campo{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:40px}
+.campo span{color:var(--tinta2)}
+.dica{margin:4px 0 0;color:var(--tinta3);font-size:12px}
+.dica.alerta{color:var(--alerta)}
+.hora{background:var(--chao);border:0;border-radius:8px;color:var(--tinta);font:500 14px var(--mono);padding:8px 10px;color-scheme:dark;width:118px}
+.seg{position:relative;display:inline-flex;background:var(--chao);border-radius:9px;padding:3px}
+.seg button{position:relative;z-index:1;padding:5px 12px;font-size:13px;color:var(--tinta3);border-radius:7px;transition:color .25s var(--ease)}
+.seg button[aria-pressed="true"]{color:var(--tinta)}
+.seg button:disabled{opacity:.35;cursor:not-allowed}
+.seg .trilho{position:absolute;top:3px;bottom:3px;left:3px;border-radius:7px;background:var(--gaveta2);transition:transform .3s var(--mover),width .3s var(--mover)}
+.link{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:40px;color:var(--tinta2);transition:color .15s}
+.link:hover{color:var(--tinta)}
+.link svg{width:14px;height:14px;color:var(--tinta4)}
+.link.perigo{color:var(--erro)}
+.versao{font:12px var(--mono)}
+.novidades{list-style:none;margin:8px 0 12px;padding:0;font-size:13px;color:var(--tinta2)}
+.novidades li{padding:4px 0 4px 14px;position:relative}
+.novidades li::before{content:'';position:absolute;left:0;top:12px;width:5px;height:5px;border-radius:50%;background:var(--menta)}
+.sec{height:36px;padding:0 16px;border-radius:999px;background:var(--gaveta2);font-weight:500;font-size:13px;transition:transform .12s var(--ease),background .15s}
+.sec:hover{background:#24262b}
+.sec:active{transform:scale(.97)}
+
+.grande{font-size:32px;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.1}
+.par{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:6px}
+.par small{display:block;color:var(--tinta3);font-size:12px;margin-top:4px}
+.barras{display:flex;flex-direction:column;gap:9px}
+.barras div{display:grid;grid-template-columns:100px 1fr 28px;align-items:center;gap:12px;font-size:13px;color:var(--tinta2)}
+.barras i{height:4px;border-radius:999px;background:var(--chao);overflow:hidden}
+.barras i b{display:block;height:100%;width:100%;background:var(--tinta3);border-radius:999px;transform-origin:left;transform:scaleX(0);transition:transform .7s var(--ease)}
+.barras .q{text-align:right;font:12px var(--mono);color:var(--tinta3)}
+.dias{display:flex;align-items:flex-end;gap:8px;height:56px;margin-top:16px}
+.dias div{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.dias b{width:100%;border-radius:4px;background:var(--menta);opacity:.85;height:100%;transform-origin:bottom;transform:scaleY(0);transition:transform .7s var(--ease)}
+.dias b.zero{background:var(--gaveta2);opacity:1}
+.dias span{font-size:11px;color:var(--tinta4)}
+.nota{font-size:12px;color:var(--tinta3);margin:12px 0 0}
+
+.modal-fundo{position:fixed;inset:0;display:grid;place-items:center;background:rgba(5,6,8,.6);opacity:0;pointer-events:none;transition:opacity .2s var(--ease);z-index:30}
+.modal-fundo.on{opacity:1;pointer-events:auto}
+.modal{width:min(400px,calc(100vw - 32px));background:var(--gaveta);border-radius:16px;padding:24px;box-shadow:0 0 0 1px var(--vinco),0 24px 60px rgba(0,0,0,.5);transform:scale(.96);opacity:0;transition:transform .25s var(--ease),opacity .2s}
+.modal-fundo.on .modal{transform:none;opacity:1}
+.modal h3{margin:0 0 6px;font-size:16px;font-weight:600}
+.modal p{margin:0 0 18px;color:var(--tinta2)}
+.modal .bts{display:flex;justify-content:flex-end;gap:8px}
+.modal .prim{height:36px;padding:0 16px}
+.toasts{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;z-index:40;pointer-events:none}
+.toast{background:var(--tinta);color:var(--chao);font-size:13px;font-weight:500;padding:10px 16px;border-radius:999px;box-shadow:0 10px 30px rgba(0,0,0,.4);animation:sobe .3s var(--ease) both;white-space:nowrap}
+.toast.erro{background:var(--erro)}
+.toast.sai{animation:desce .2s var(--ease) both}
+@keyframes sobe{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes desce{to{opacity:0;transform:translateY(6px)}}
+.cobre{position:fixed;inset:0;display:grid;place-items:center;text-align:center;background:var(--chao);z-index:50;opacity:0;pointer-events:none;transition:opacity .3s var(--ease);color:var(--tinta2)}
+.cobre.on{opacity:1;pointer-events:auto}
+.cobre h2{margin:14px 0 4px;font-size:18px;font-weight:600;color:var(--tinta)}
+.cobre .giro{width:22px;height:22px;margin:0 auto;color:var(--menta)}
+
+@media (max-width:620px){
+  .destaque{padding:48px 0 40px} h1{font-size:34px}
+  .lin{grid-template-columns:auto 1fr auto 14px;gap:14px}
+  .oque small{display:none}
+  .det{padding-left:4px}
+  .busca.aberta input{width:140px}
+}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header class="topo">
-    <div class="logo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg></div>
-    <div class="titulo"><h1>Organizador de Downloads</h1><p id="subtitulo">&nbsp;</p></div>
-    <div class="espaco"></div>
-    <span id="pill" class="pill"><span class="ponto"></span><span id="pillTxt">Carregando</span></span>
-    <button id="sw" class="switch" role="switch" aria-checked="false" disabled><span class="trilho"><span class="bola"></span></span><span id="swTxt">Tarefa</span></button>
+    <div class="marca"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10"/><path d="m7.5 10 4.5 4.5 4.5-4.5"/><path d="M5 20h14"/></svg></i><span id="nomeApp">Organizador de Downloads</span></div>
+    <div class="esp"></div>
+    <button class="chave" id="chave" role="switch" aria-checked="false" aria-label="Organizar sozinho todo dia" disabled></button>
+    <button class="icone-btn" id="bAjustes" title="Ajustes" aria-label="Ajustes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span class="ponto" id="pontoNovo" hidden></span></button>
   </header>
 
-  <div class="aviso-topo" id="aviso"><div><p id="avisoTxt"></p></div></div>
-
-  <section class="grade">
-    <div class="card"><div class="rotulo">Próxima execução</div><div class="valor" id="cProx">--</div><div class="sub" id="cProxSub">&nbsp;</div></div>
-    <div class="card"><div class="rotulo">Última execução</div><div class="valor" id="cUlt">--</div><div class="sub" id="cUltSub">&nbsp;</div></div>
-    <div class="card"><div class="rotulo">Na fila agora</div><div class="valor" id="cFila">--</div><div class="sub">arquivos soltos na raiz</div></div>
-    <div class="card"><div class="rotulo">Já organizados</div><div class="valor" id="cTotal">--</div><div class="sub" id="cTotalSub">&nbsp;</div></div>
-  </section>
-
-  <section class="barra">
-    <button class="btn prim" id="bRodar"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><span>Rodar agora</span></button>
-    <div class="grupo"><label for="iHora" title="Horário diário">Horário</label><input type="time" id="iHora"><button class="btn" id="bHora">Salvar</button></div>
-    <div class="grupo" style="padding-right:4px"><span class="l">Modo</span>
-      <div class="seg" id="seg"><span class="marcador" id="marcador"></span><button data-modo="claude" aria-pressed="false">Claude</button><button data-modo="script" aria-pressed="false">Só script</button></div>
+  <section class="destaque">
+    <p class="olho">Downloads</p>
+    <h1 id="titulo">&nbsp;</h1>
+    <p class="linha-sub" id="sub">&nbsp;</p>
+    <div class="monte" id="monte"></div>
+    <div class="acoes">
+      <button class="prim" id="bRodar" disabled><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l10.5-6.5z"/></svg><span>Organizar agora</span></button>
     </div>
-    <div class="espaco"></div>
-    <button class="btn novo btn-sumir" id="bAtualizar" title="Tem versão nova no GitHub"><span class="ponto-novo"></span>Atualizar</button>
-    <button class="btn" data-abrir="downloads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Downloads</button>
-    <button class="btn" data-abrir="dados" title="Pasta com scripts, histórico, config.json e configurar-token.cmd">Dados</button>
-    <button class="btn perigo" id="bSair" title="Desliga o servidor do painel. A tarefa continua agendada.">Fechar painel</button>
+    <div class="aviso" id="aviso" hidden></div>
   </section>
 
-  <div class="secoes">
-    <section class="secao">
-      <h2>Histórico <span class="cont" id="hCont"></span></h2>
-      <div class="filtros">
-        <button class="chip" data-f="todos" aria-pressed="true">Todas</button>
-        <button class="chip" data-f="arquivos" aria-pressed="false">Com arquivos</button>
-        <button class="chip" data-f="erros" aria-pressed="false">Erros</button>
-        <label class="busca"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="iBusca" placeholder="Onde foi parar meu arquivo?"></label>
-      </div>
-      <div id="lista"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
-    </section>
-
-    <aside class="lado">
-      <div class="card">
-        <h2>Para onde vai cada coisa</h2>
-        <div class="barras" id="barras"></div>
-        <div class="dica">Soma das execuções que não foram desfeitas. Categorias e extensões ficam no config.json (botão Dados).</div>
-      </div>
-      <div class="card" id="cardLimite">
-        <h2>Consumo do limite do Claude</h2>
-        <div class="lim-grade">
-          <div><span class="rotulo">Últimos 7 dias</span><b id="lim7">--</b><small>da janela de 5h</small></div>
-          <div><span class="rotulo">Média semanal</span><b id="limMedia">--</b><small>da janela de 5h</small></div>
-          <div><span class="rotulo">Por rodada</span><b id="limRodada">--</b><small>da janela de 5h</small></div>
-          <div><span class="rotulo">Limite semanal</span><b id="limSem">--</b><small>gasto nos últimos 7 dias</small></div>
-        </div>
-        <div class="dias" id="limDias"></div>
-        <div class="dica" id="limDica">Mede o limite antes e depois de cada rodada. Se você usar o Claude em outro lugar durante a rodada, entra na conta também.</div>
-      </div>
-      <div class="card">
-        <h2 style="margin-bottom:10px">Na fila da próxima rodada</h2>
-        <ul class="fila" id="fila"></ul>
-        <div class="dica" id="dicaFila">&nbsp;</div>
-      </div>
-    </aside>
-  </div>
-  <div class="rodape" id="rodape">&nbsp;</div>
+  <section>
+    <div class="cab-sec">
+      <h2>Atividade</h2>
+      <div class="busca" id="busca"><input id="iBusca" placeholder="Procurar um arquivo" aria-label="Procurar um arquivo"><button class="icone-btn" id="bBusca" title="Procurar um arquivo" aria-label="Procurar um arquivo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4"/></svg></button></div>
+    </div>
+    <div class="lista" id="lista"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
+    <button class="mais" id="bMais" hidden>Ver mais</button>
+    <div class="numeros" id="numeros" hidden></div>
+  </section>
 </div>
 
-<div class="fundo" id="fundo"><div class="modal" role="dialog" aria-modal="true"><h3 id="mTit"></h3><p id="mTxt"></p><ul class="novidades" id="mLista" hidden></ul><div class="acoesdet"><button class="btn" id="mNao">Cancelar</button><button class="btn prim" id="mSim">Confirmar</button></div></div></div>
+<div class="veu" id="veu"></div>
+<aside class="lateral" id="lateral" aria-label="Painel lateral">
+  <header><span id="latTitulo">Ajustes</span><div class="esp"></div><button class="icone-btn" id="bFechaLat" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
+  <div class="rolo" id="latCorpo"></div>
+</aside>
+
+<div class="modal-fundo" id="modalFundo"><div class="modal" role="dialog" aria-modal="true"><h3 id="mTit"></h3><p id="mTxt"></p><ul class="novidades" id="mLista" hidden></ul><div class="bts"><button class="sec" id="mNao">Cancelar</button><button class="prim" id="mSim">Confirmar</button></div></div></div>
 <div class="toasts" id="toasts"></div>
-<div class="atualizando" id="atualizando"><div class="caixa"><span class="giro" style="display:block"></span><h2>Atualizando...</h2><p>Baixando a versão nova e reiniciando o painel. Volta em alguns segundos.</p></div></div>
-<div class="desligado" id="desligado"><div><h2>Painel fechado</h2><p>A tarefa segue agendada. Abra o atalho "Organizador de Downloads" quando quiser voltar.</p></div></div>
+<div class="cobre" id="cobreAtualizando"><div><span class="giro" style="display:block"></span><h2>Atualizando</h2><p>Volta em alguns segundos.</p></div></div>
+<div class="cobre" id="cobreFechado"><div><h2>Painel fechado</h2><p>A organização automática continua. Abra o atalho quando quiser voltar.</p></div></div>
 
 <script>
 const TOKEN = '__TOKEN__';
 const $ = s => document.querySelector(s);
-let status = null, historico = [], filtro = 'todos', busca = '', abertos = new Set(), estavaRodando = false, timer = null;
+let status = null, historico = [], versao = null, busca = '', abertos = new Set(), estavaRodando = false, timer = null, mostrar = 6, lateral = null;
 
 async function api(caminho, corpo){
   const r = await fetch(caminho, {method: corpo === undefined ? 'GET' : 'POST', headers: {'X-Token': TOKEN, 'Content-Type': 'application/json'}, body: corpo === undefined ? undefined : JSON.stringify(corpo)});
   const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(j.erro || ('Erro HTTP ' + r.status));
+  if (!r.ok) throw new Error(j.erro || ('Erro ' + r.status));
   return j;
 }
-const limpaCommit = m => { const t = String(m || '').replace(/^\w+(\([^)]*\))?!?:\s*/, ''); return t.charAt(0).toUpperCase() + t.slice(1); };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const fmtData = iso => iso ? new Date(iso).toLocaleString('pt-BR', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'}) : '--';
-function relativo(iso){
+const limpaCommit = m => { const t = String(m || '').replace(/^\w+(\([^)]*\))?!?:\s*/, ''); return t.charAt(0).toUpperCase() + t.slice(1); };
+const DIA = 864e5;
+function quando(iso){
   if (!iso) return '';
-  const rtf = new Intl.RelativeTimeFormat('pt-BR', {numeric:'auto'});
-  const s = (new Date(iso) - Date.now()) / 1000, a = Math.abs(s);
+  const d = new Date(iso), hoje = new Date(); hoje.setHours(0,0,0,0);
+  const h = d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+  const dif = Math.round((hoje - new Date(d).setHours(0,0,0,0)) / DIA);
+  if (dif === 0) return 'Hoje, ' + h;
+  if (dif === 1) return 'Ontem, ' + h;
+  if (dif === -1) return 'Amanhã, ' + h;
+  return d.toLocaleDateString('pt-BR', {day:'numeric', month:'short'}).replace('.', '') + ', ' + h;
+}
+function relativo(iso){
+  const s = (new Date(iso) - Date.now()) / 1000, a = Math.abs(s), rtf = new Intl.RelativeTimeFormat('pt-BR', {numeric:'auto'});
   if (a < 60) return rtf.format(Math.round(s), 'second');
   if (a < 3600) return rtf.format(Math.round(s/60), 'minute');
   if (a < 86400) return rtf.format(Math.round(s/3600), 'hour');
   return rtf.format(Math.round(s/86400), 'day');
 }
-function tam(b){ if (b == null) return ''; const u = ['B','KB','MB','GB']; let i = 0; while (b >= 1024 && i < 3){ b /= 1024; i++; } return (i ? b.toFixed(1) : b) + ' ' + u[i]; }
-function nomeModelo(m){ const x = /claude-(\w+)-(\d+)-(\d+)/.exec(m || ''); return x ? x[1][0].toUpperCase() + x[1].slice(1) + ' ' + x[2] + '.' + x[3] : (m || 'Claude'); }
-function toast(msg, err){
-  const t = document.createElement('div'); t.className = 'toast' + (err ? ' err' : ''); t.textContent = msg;
-  $('#toasts').appendChild(t);
-  setTimeout(() => { t.classList.add('sai'); setTimeout(() => t.remove(), 300); }, 3800);
+const pct = v => v == null || isNaN(v) ? '--' : (v > 0 && v < .1 ? '<0,1%' : v.toLocaleString('pt-BR', {maximumFractionDigits: v < 10 ? 1 : 0}) + '%');
+const plural = (n, um, varios) => n + ' ' + (n === 1 ? um : varios);
+function toast(msg, erro){
+  const t = document.createElement('div'); t.className = 'toast' + (erro ? ' erro' : ''); t.textContent = msg;
+  $('#toasts').appendChild(t); setTimeout(() => { t.classList.add('sai'); setTimeout(() => t.remove(), 200); }, 3200);
 }
 function confirmar(tit, txt, lista, soOk){
   return new Promise(res => {
     $('#mTit').textContent = tit; $('#mTxt').textContent = txt;
     const ul = $('#mLista'); ul.hidden = !(lista && lista.length); ul.innerHTML = (lista || []).map(i => `<li>${esc(limpaCommit(i))}</li>`).join('');
     $('#mNao').hidden = !!soOk; $('#mSim').textContent = soOk ? 'Beleza' : 'Confirmar';
-    $('#fundo').classList.add('on'); $('#mSim').focus();
-    const fim = v => { $('#fundo').classList.remove('on'); $('#mSim').onclick = $('#mNao').onclick = null; res(v); };
+    $('#modalFundo').classList.add('on'); $('#mSim').focus();
+    const fim = v => { $('#modalFundo').classList.remove('on'); $('#mSim').onclick = $('#mNao').onclick = $('#modalFundo').onclick = null; res(v); };
     $('#mSim').onclick = () => fim(true); $('#mNao').onclick = () => fim(false);
-    $('#fundo').onclick = e => { if (e.target.id === 'fundo') fim(false); };
+    $('#modalFundo').onclick = e => { if (e.target.id === 'modalFundo') fim(false); };
   });
 }
-const resultadoTxt = c => c === 0 ? ['Sucesso','ok'] : c === 267011 ? ['Ainda não rodou',''] : c === 267009 ? ['Rodando agora',''] : ['Falhou (código ' + c + ')','erro'];
 
-function renderModo(){
-  const s = status, seg = $('#seg'), marc = $('#marcador');
-  seg.querySelectorAll('button').forEach(b => {
-    b.setAttribute('aria-pressed', String(b.dataset.modo === s.modo));
-    b.disabled = b.dataset.modo === 'claude' && !s.claudeDisponivel;
-    b.title = b.disabled ? 'Claude Code não está instalado neste PC' : '';
-  });
-  const ativo = seg.querySelector('[aria-pressed="true"]');
-  if (ativo){ marc.style.width = ativo.offsetWidth + 'px'; marc.style.transform = `translateX(${ativo.offsetLeft - 3}px)`; }
-  $('#subtitulo').textContent = s.modo === 'claude' ? `Claude ${nomeModelo(s.modelo)} arruma sua pasta todo dia` : 'Regras fixas, sem IA, todo dia';
-  let aviso = '';
-  if (!s.instalada) aviso = 'A tarefa agendada não foi encontrada. Rode o instalar.cmd de novo.';
-  else if (s.modo === 'claude' && !s.tokenSalvo) aviso = 'Modo Claude sem token salvo: as rodadas automáticas podem falhar por login expirado. Clique em Dados e abra o configurar-token.cmd.';
-  $('#avisoTxt').textContent = aviso; $('#aviso').classList.toggle('on', !!aviso);
-}
-
-function renderStatus(){
-  const s = status, pill = $('#pill'), sw = $('#sw');
-  const rodando = s.instalada && s.estado === 'Running';
-  pill.className = 'pill ' + (!s.instalada ? 'ausente' : rodando ? 'rodando' : s.habilitada ? 'ativa' : 'pausada');
-  $('#pillTxt').textContent = !s.instalada ? 'Tarefa não instalada' : rodando ? 'Rodando' : s.habilitada ? 'Ativa' : 'Pausada';
-  sw.disabled = !s.instalada || rodando;
-  sw.setAttribute('aria-checked', String(!!s.habilitada));
-  $('#swTxt').textContent = s.habilitada ? 'Ligada' : 'Desligada';
-  $('#bRodar').disabled = !s.instalada || rodando;
-  $('#bRodar').innerHTML = rodando ? '<span class="giro"></span><span>Organizando...</span>' : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><span>Rodar agora</span>';
-  if (document.activeElement !== $('#iHora') && s.horario) $('#iHora').value = s.horario;
-  $('#cProx').textContent = !s.instalada ? '--' : !s.habilitada ? 'Pausada' : s.proxima ? fmtData(s.proxima) : '--';
-  $('#cProxSub').textContent = s.habilitada && s.proxima ? relativo(s.proxima) + ' · se o PC estiver desligado, roda ao ligar' : ' ';
-  const [rt, rc] = resultadoTxt(s.ultimoResultado);
-  $('#cUlt').textContent = s.ultima ? fmtData(s.ultima) : 'Nunca';
-  $('#cUltSub').innerHTML = s.ultima ? `<span class="${rc}">${rt}</span> · ${relativo(s.ultima)}` : '&nbsp;';
-  const fila = s.pendentes || [];
-  $('#cFila').textContent = fila.length;
-  $('#fila').innerHTML = fila.length ? fila.slice(0, 60).map(f => `<li title="${esc(f.nome)}"><span class="nome">${esc(f.nome)}</span><span class="p">${f.recente ? 'aguardando · ' : ''}${esc(f.pasta)}</span></li>`).join('') : '<div class="vazio">Raiz limpa. Nada esperando.</div>';
-  $('#dicaFila').textContent = 'Pasta: ' + (s.downloads || '') + '. Arquivos mexidos há pouco tempo esperam a rodada seguinte.';
-  renderModo();
-  if (estavaRodando && !rodando){ carregarHistorico().then(() => { const u = historico[0]; if (u) toast(u.status === 'ok' ? `Pronto: ${(u.movidos||[]).length} arquivo(s) organizado(s)` : 'A execução terminou com erro. Veja o histórico.', u.status !== 'ok'); }); }
+function renderDestaque(){
+  const s = status, rodando = s.instalada && s.estado === 'Running', fila = s.pendentes || [];
+  const chave = $('#chave');
+  chave.disabled = !s.instalada || rodando; chave.setAttribute('aria-checked', String(!!s.habilitada));
+  chave.title = s.habilitada ? 'Organizando sozinho todo dia. Clique para pausar' : 'Pausado. Clique para ligar';
+  if (rodando) $('#titulo').textContent = 'Arrumando...';
+  else if (!fila.length) $('#titulo').textContent = 'Tudo em ordem.';
+  else $('#titulo').innerHTML = `<span class="num">${fila.length}</span> ${fila.length === 1 ? 'arquivo solto' : 'arquivos soltos'}`;
+  let sub;
+  if (!s.instalada) sub = 'A tarefa agendada não foi encontrada. Rode o instalar.cmd de novo.';
+  else if (rodando) sub = s.modo === 'claude' ? 'O Claude está separando seus arquivos.' : 'Separando seus arquivos.';
+  else if (!s.habilitada) sub = 'Pausado. Ligue no topo para voltar a organizar sozinho.';
+  else sub = `Próxima arrumação <b>${esc(quando(s.proxima).toLowerCase())}</b>.` + (s.ultima ? ` Última ${esc(relativo(s.ultima))}.` : '');
+  $('#sub').innerHTML = sub;
+  const monte = rodando ? '' : fila.slice(0, 5).map((f, i) => `<span style="animation-delay:${i * 40}ms" title="${esc(f.nome)} vai para ${esc(f.pasta)}${f.recente ? ' na próxima rodada' : ''}">${esc(f.nome)}</span>`).join('') + (fila.length > 5 ? `<span>+${fila.length - 5}</span>` : '');
+  if ($('#monte').dataset.h !== monte){ $('#monte').dataset.h = monte; $('#monte').innerHTML = monte; }
+  const b = $('#bRodar');
+  b.disabled = !s.instalada || rodando;
+  b.innerHTML = rodando ? '<span class="giro"></span><span>Arrumando</span>' : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l10.5-6.5z"/></svg><span>Organizar agora</span>';
+  const aviso = s.modo === 'claude' && !s.tokenSalvo ? 'Falta o login de longa duração do Claude: as rodadas automáticas podem falhar.<button data-acao="ajustes">Resolver</button>' : '';
+  if ($('#aviso').dataset.h !== aviso){ $('#aviso').dataset.h = aviso; $('#aviso').innerHTML = aviso; $('#aviso').hidden = !aviso; }
+  if (estavaRodando && !rodando){
+    carregarHistorico().then(() => { const u = historico[0]; if (!u) return; const n = (u.movidos || []).length; toast(u.status !== 'ok' ? 'Algo deu errado. Veja na atividade.' : n ? 'Pronto, ' + plural(n, 'arquivo organizado', 'arquivos organizados') : 'Já estava tudo em ordem', u.status !== 'ok'); });
+  }
   estavaRodando = rodando;
-  if (historico.length) renderStats();
+  if (lateral === 'ajustes') renderAjustes(true);
   agendar(rodando ? 2000 : 6000);
 }
 
-function fmtPct(v){ if (v == null || isNaN(v)) return '--'; if (v > 0 && v < 0.1) return '<0,1%'; return v.toLocaleString('pt-BR', {maximumFractionDigits: v < 10 ? 2 : 1}) + '%'; }
-
-function renderLimites(){
-  const comDados = historico.filter(h => h.limites && h.limites.cincoHoras);
-  const card = $('#cardLimite');
-  if (!comDados.length){
-    $('#lim7').textContent = $('#limMedia').textContent = $('#limRodada').textContent = $('#limSem').textContent = '--';
-    $('#limDias').innerHTML = '';
-    $('#limDica').textContent = status && status.modo !== 'claude' ? 'Aparece quando você usa o modo Claude.' : 'Aparece depois da primeira rodada com o Claude.';
-    return;
-  }
-  const agora = Date.now(), dia = 864e5;
-  const c5 = h => h.limites.cincoHoras.consumo || 0;
-  const ult7 = comDados.filter(h => agora - new Date(h.inicio) < 7 * dia);
-  $('#lim7').textContent = fmtPct(ult7.reduce((a, h) => a + c5(h), 0));
-  const total = comDados.reduce((a, h) => a + c5(h), 0);
-  const primeiro = Math.min(...comDados.map(h => +new Date(h.inicio)));
-  const semanas = Math.max(1, (agora - primeiro) / (7 * dia));
-  $('#limMedia').textContent = fmtPct(total / semanas);
-  $('#limRodada').textContent = fmtPct(total / comDados.length);
-  $('#limSem').textContent = fmtPct(ult7.reduce((a, h) => a + ((h.limites.semanal && h.limites.semanal.consumo) || 0), 0));
-  const dias = [];
-  for (let i = 6; i >= 0; i--){
-    const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - i);
-    const fim = +d + dia;
-    const v = comDados.filter(h => { const t = +new Date(h.inicio); return t >= +d && t < fim; }).reduce((a, h) => a + c5(h), 0);
-    dias.push({ l: d.toLocaleDateString('pt-BR', {weekday: 'short'}).replace('.', ''), v });
-  }
-  const max = Math.max(...dias.map(d => d.v), 0.0001);
-  $('#limDias').innerHTML = dias.map(d => `<div class="d" title="${fmtPct(d.v)} da janela de 5h"><div class="b${d.v ? '' : ' zero'}" data-h="${(d.v / max * 100).toFixed(1)}"></div><span class="l">${esc(d.l)}</span></div>`).join('');
-  requestAnimationFrame(() => requestAnimationFrame(() => document.querySelectorAll('#limDias .b').forEach(b => b.style.height = Math.max(3, +b.dataset.h) + '%')));
-  $('#limDica').textContent = 'Mede o limite antes e depois de cada rodada. Se você usar o Claude em outro lugar durante a rodada, entra na conta também.';
+const bate = m => m.nome.toLowerCase().includes(busca) || (m.destino || '').toLowerCase().includes(busca);
+function marca(txt){ const t = esc(txt); if (!busca) return t; const i = txt.toLowerCase().indexOf(busca); if (i < 0) return t; return esc(txt.slice(0,i)) + '<mark>' + esc(txt.slice(i, i + busca.length)) + '</mark>' + esc(txt.slice(i + busca.length)); }
+function pastasDe(mov){
+  const c = {}; mov.forEach(m => c[m.pasta] = (c[m.pasta] || 0) + 1);
+  const ord = Object.keys(c).sort((a, b) => c[b] - c[a]);
+  return ord.slice(0, 2).join(', ') + (ord.length > 2 ? ' +' + (ord.length - 2) : '');
 }
-
-function renderStats(){
-  const cont = {}; let total = 0;
-  historico.filter(h => !h.desfeito).forEach(h => (h.movidos || []).forEach(m => { cont[m.pasta] = (cont[m.pasta] || 0) + 1; total++; }));
-  $('#cTotal').textContent = total;
-  renderLimites();
-  const execs = historico.length, erros = historico.filter(h => h.status !== 'ok').length;
-  $('#cTotalSub').textContent = execs ? `em ${execs} execução(ões)${erros ? ' · ' + erros + ' com erro' : ''}` : 'nenhuma execução ainda';
-  const pastas = (status && status.categorias) || [];
-  const max = Math.max(1, ...Object.values(cont));
-  const ordem = [...pastas, ...Object.keys(cont).filter(k => !pastas.includes(k))];
-  const html = ordem.map(p => `<div class="linha"><span>${esc(p)}</span><div class="trilho"><div class="enche" data-w="${((cont[p]||0)/max*100).toFixed(1)}"></div></div><span class="q">${cont[p]||0}</span></div>`).join('');
-  if ($('#barras').dataset.html === html) return;
-  $('#barras').dataset.html = html; $('#barras').innerHTML = html;
-  requestAnimationFrame(() => requestAnimationFrame(() => document.querySelectorAll('.enche').forEach(e => e.style.width = e.dataset.w + '%')));
-}
-
-const ICO = {
-  ok: '<svg viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>',
-  erro: '<svg viewBox="0 0 24 24" fill="none" stroke="var(--err)" stroke-width="2.4" stroke-linecap="round"><path d="M12 7v6M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>',
-  desf: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>'
-};
-function marca(txt){ const t = esc(txt); if (!busca) return t; const i = txt.toLowerCase().indexOf(busca); if (i < 0) return t; return esc(txt.slice(0,i)) + '<mark>' + esc(txt.slice(i, i+busca.length)) + '</mark>' + esc(txt.slice(i+busca.length)); }
-const bateBusca = m => m.nome.toLowerCase().includes(busca) || (m.destino || '').toLowerCase().includes(busca);
-
-function renderHistorico(){
+function renderAtividade(){
   let lista = historico;
-  if (filtro === 'arquivos') lista = lista.filter(h => (h.movidos || []).length);
-  if (filtro === 'erros') lista = lista.filter(h => h.status !== 'ok');
-  if (busca) lista = lista.filter(h => (h.movidos || []).some(bateBusca));
-  $('#hCont').textContent = historico.length ? `${lista.length} de ${historico.length}` : '';
+  if (busca) lista = lista.filter(h => (h.movidos || []).some(bate));
   if (!lista.length){
-    $('#lista').innerHTML = `<div class="card vazio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>${historico.length ? 'Nada bate com esse filtro.' : 'Nenhuma execução ainda. Clique em "Rodar agora" para testar.'}</div>`;
-    return;
+    $('#lista').innerHTML = `<div class="vazio">${historico.length ? 'Nenhum arquivo com esse nome.' : 'Ainda não rodou nenhuma vez. Clique em Organizar agora para ver como fica.'}</div>`;
+    $('#bMais').hidden = true; return;
   }
-  $('#lista').innerHTML = lista.map(h => {
-    const mov = h.movidos || [], tipo = h.desfeito ? 'desf' : h.status === 'ok' ? 'ok' : 'erro';
-    const mostrar = busca ? mov.filter(bateBusca) : mov;
-    const aberto = abertos.has(h.id) || !!busca;
-    const loginRuim = h.status !== 'ok' && /authenticat|oauth|login|401/i.test(h.resumo || '');
-    return `<article class="item${aberto ? ' aberto' : ''}" data-id="${esc(h.id)}">
-      <button class="cab" aria-expanded="${aberto}">
-        <span class="icone ${tipo}">${ICO[tipo]}</span>
-        <span class="meio"><span class="l1">${fmtData(h.inicio)} <span class="tag ${h.origem === 'manual' ? 'manual' : ''}">${h.origem === 'manual' ? 'manual' : 'agendada'}</span>${h.modo ? `<span class="tag">${h.modo === 'claude' ? 'Claude' : 'script'}</span>` : ''}${h.desfeito ? '<span class="tag desf">desfeita</span>' : ''}${h.status !== 'ok' ? '<span class="tag err">erro</span>' : ''}</span>
-        <span class="l2">${relativo(h.inicio)} · ${h.duracaoSeg ?? '?'} s</span></span>
-        <span class="num">${mov.length}<small>arquivos</small></span>
-        <svg class="seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
-      </button>
+  const visiveis = busca ? lista : lista.slice(0, mostrar);
+  $('#bMais').hidden = !!busca || lista.length <= mostrar;
+  $('#lista').innerHTML = visiveis.map(h => {
+    const mov = h.movidos || [], ver = busca ? mov.filter(bate) : mov, aberto = abertos.has(h.id) || !!busca;
+    const st = h.desfeito ? '<span class="marca-st desf">desfeita</span>' : h.status !== 'ok' ? '<span class="marca-st erro">erro</span>' : '<span></span>';
+    const oque = h.status !== 'ok' ? 'Não conseguiu organizar' : mov.length ? `${plural(mov.length, 'arquivo', 'arquivos')}<small>${esc(pastasDe(mov))}</small>` : 'Nada para mover';
+    const login = /authenticat|oauth|login|401/i.test(h.resumo || '');
+    const lim = h.limites && h.limites.cincoHoras;
+    const meta = [h.duracaoSeg != null ? Number(h.duracaoSeg).toLocaleString('pt-BR') + ' s' : null, h.modo === 'claude' ? 'Claude' : 'script', h.origem === 'manual' ? 'manual' : null, lim ? 'limite de 5h +' + pct(lim.consumo) + (lim.reiniciou ? ' (reiniciou no meio)' : '') : null].filter(Boolean).join(' · ');
+    return `<div class="item${aberto ? ' aberto' : ''}" data-id="${esc(h.id)}">
+      <button class="lin" aria-expanded="${aberto}"><span class="quando">${esc(quando(h.inicio))}</span><span class="oque">${oque}</span>${st}<svg class="seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></button>
       <div class="corpo"><div><div class="det">
-        <div class="meta">
-          <div><span class="rotulo">Duração</span><b>${h.duracaoSeg ?? '--'} s</b></div>
-          <div><span class="rotulo">Turnos</span><b>${h.turnos ?? '--'}</b></div>
-          <div><span class="rotulo">Custo est. API</span><b>${h.custoUsd != null ? 'US$ ' + Number(h.custoUsd).toFixed(4) : '--'}</b></div>
-          <div><span class="rotulo">Código saída</span><b>${h.codigoSaida ?? '--'}</b></div>
-        </div>
-        ${h.limites ? `<div class="limite-run">${h.limites.cincoHoras ? `<span>Limite 5h: ${fmtPct(h.limites.cincoHoras.antes)} → ${fmtPct(h.limites.cincoHoras.depois)} <b>+${fmtPct(h.limites.cincoHoras.consumo)}</b></span>` : ''}${h.limites.semanal ? `<span>Semanal: ${fmtPct(h.limites.semanal.antes)} → ${fmtPct(h.limites.semanal.depois)} <b>+${fmtPct(h.limites.semanal.consumo)}</b></span>` : ''}${h.limites.cincoHoras && h.limites.cincoHoras.reiniciou ? '<span class="reset">A janela de 5h reiniciou durante a rodada</span>' : ''}</div>` : ''}
-        ${h.resumo ? `<div class="resumo${h.status !== 'ok' ? ' err' : ''}">${esc(h.resumo)}</div>` : ''}
-        ${loginRuim ? '<div class="resumo dica-login">Problema de login do Claude. Clique em <b>Dados</b> e abra o <b>configurar-token.cmd</b> para salvar um token de 1 ano.</div>' : ''}
-        ${mostrar.length ? `<ul class="arquivos">${mostrar.map(m => `<li><span class="nome" title="${esc(m.nome)}">${marca(m.nome)}</span><span class="tam">${tam(m.tamanho)}</span><span class="p">${esc(m.pasta)}</span>${m.destino && !h.desfeito ? `<button class="mini" data-mostrar="${esc(m.destino)}" title="Mostrar no Explorer">abrir</button>` : ''}</li>`).join('')}</ul>` : '<div class="vazio" style="padding:12px">Nenhum arquivo movido nessa rodada.</div>'}
-        ${mov.length && !h.desfeito ? `<div class="acoesdet"><button class="btn" data-desfazer="${esc(h.id)}">${ICO.desf.replace('<svg','<svg style="width:15px;height:15px"')}Desfazer esta rodada</button></div>` : ''}
+        ${h.status !== 'ok' && h.resumo ? `<p class="resumo erro">${esc(login ? 'O login do Claude expirou. Abra Ajustes para resolver, ou troque para o modo só script.' : h.resumo)}</p>` : ''}
+        ${ver.length ? `<ul class="arqs">${ver.map(m => `<li><span class="n" title="${esc(m.nome)}">${marca(m.nome)}</span><span class="p">${esc(m.pasta)}</span>${m.destino && !h.desfeito ? `<button data-mostrar="${esc(m.destino)}">Mostrar</button>` : ''}</li>`).join('')}</ul>` : ''}
+        <div class="rodape-det"><span>${esc(meta)}</span><span class="esp"></span>${mov.length && !h.desfeito ? `<button class="txt-btn" data-desfazer="${esc(h.id)}">Desfazer</button>` : ''}</div>
       </div></div></div>
-    </article>`;
+    </div>`;
   }).join('');
 }
-
-let versao = null;
-async function carregarVersao(forcar){
-  try { versao = await api('/api/versao' + (forcar ? '?forcar=1' : '')); } catch { return; }
-  $('#bAtualizar').classList.toggle('btn-sumir', !versao.novidade);
-  $('#rodape').innerHTML = `Organizador de Downloads · versão ${esc(versao.local || 'desconhecida')}${versao.erro ? ' · ' + esc(versao.erro) : versao.novidade ? ' · versão nova disponível' : ' · atualizado'} · <a href="https://github.com/ArturoAndreatta/organizador-downloads" target="_blank" rel="noopener">GitHub</a>`;
+function renderNumeros(){
+  const total = historico.filter(h => !h.desfeito).reduce((a, h) => a + (h.movidos || []).length, 0);
+  const el = $('#numeros');
+  el.hidden = !historico.length;
+  el.innerHTML = `<span><b>${total}</b> ${total === 1 ? 'arquivo organizado' : 'arquivos organizados'} até agora</span><button class="txt-btn" data-acao="numeros">Ver números</button>`;
 }
-async function esperarVoltar(){
-  const inicio = Date.now(); let caiu = false;
-  while (Date.now() - inicio < 120000){
-    await new Promise(r => setTimeout(r, 1500));
-    try { const r = await fetch('/api/ping', {cache: 'no-store'}); if (r.ok && (caiu || Date.now() - inicio > 8000)) { location.reload(); return; } } catch { caiu = true; }
+
+function abrirLateral(qual){
+  lateral = qual; $('#latTitulo').textContent = qual === 'ajustes' ? 'Ajustes' : 'Números';
+  qual === 'ajustes' ? renderAjustes() : renderNumerosLat();
+  $('#veu').classList.add('on'); $('#lateral').classList.add('on');
+  if (qual === 'ajustes') carregarVersao(true).then(() => lateral === 'ajustes' && renderAjustes(true));
+}
+function fecharLateral(){ lateral = null; $('#veu').classList.remove('on'); $('#lateral').classList.remove('on'); }
+const SETA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg>';
+function renderAjustes(soAtualizar){
+  const s = status || {}, v = versao || {};
+  if (soAtualizar && document.activeElement && document.activeElement.id === 'iHora') return;
+  const html = `
+    <div class="grupo"><h3>Quando</h3>
+      <div class="campo"><span>Todo dia às</span><input class="hora" type="time" id="iHora" value="${esc(s.horario || '20:00')}"></div>
+      <p class="dica">PC desligado nessa hora? Ele organiza assim que você ligar.</p>
+    </div>
+    <div class="grupo"><h3>Quem organiza</h3>
+      <div class="campo"><span>Modo</span><div class="seg" id="seg"><span class="trilho"></span><button data-modo="script" aria-pressed="${s.modo !== 'claude'}">Só script</button><button data-modo="claude" aria-pressed="${s.modo === 'claude'}" ${s.claudeDisponivel ? '' : 'disabled title="Claude Code não está instalado neste PC"'}>Claude</button></div></div>
+      <p class="dica">${s.modo === 'claude' ? 'O Claude Haiku separa os arquivos usando sua assinatura.' : 'Regras fixas por tipo de arquivo, sem IA.'}</p>
+      ${s.modo === 'claude' && !s.tokenSalvo ? '<p class="dica alerta">Para rodar sozinho, abra a pasta de dados e dê dois cliques em configurar-token.cmd.</p>' : ''}
+    </div>
+    <div class="grupo"><h3>Pastas</h3>
+      <button class="link" data-abrir="downloads">Abrir Downloads ${SETA}</button>
+      <button class="link" data-abrir="dados">Abrir pasta de dados ${SETA}</button>
+    </div>
+    <div class="grupo"><h3>Versão</h3>
+      <div class="campo"><span class="versao">${esc(v.local || 'desconhecida')}</span>${v.novidade ? '<button class="sec" id="bAtualizar">Atualizar</button>' : `<span class="dica">${v.erro ? 'Sem acesso ao GitHub' : 'Em dia'}</span>`}</div>
+      ${v.novidade && (v.novidades || []).length ? `<ul class="novidades">${v.novidades.map(n => `<li>${esc(limpaCommit(n))}</li>`).join('')}</ul>` : ''}
+    </div>
+    <div class="grupo">
+      <button class="link perigo" id="bSair">Fechar painel</button>
+      <p class="dica">A organização automática continua com o painel fechado.</p>
+    </div>`;
+  if ($('#latCorpo').dataset.h === html) return;
+  $('#latCorpo').dataset.h = html; $('#latCorpo').innerHTML = html;
+  requestAnimationFrame(posicionarSeg);
+}
+function posicionarSeg(){
+  const seg = $('#seg'); if (!seg) return;
+  const a = seg.querySelector('[aria-pressed="true"]'), t = seg.querySelector('.trilho');
+  if (a){ t.style.width = a.offsetWidth + 'px'; t.style.transform = `translateX(${a.offsetLeft - 3}px)`; }
+}
+function renderNumerosLat(){
+  const ok = historico.filter(h => !h.desfeito);
+  const cont = {}; ok.forEach(h => (h.movidos || []).forEach(m => cont[m.pasta] = (cont[m.pasta] || 0) + 1));
+  const total = Object.values(cont).reduce((a, b) => a + b, 0), max = Math.max(1, ...Object.values(cont));
+  const ordem = Object.keys(cont).sort((a, b) => cont[b] - cont[a]);
+  const comLim = historico.filter(h => h.limites && h.limites.cincoHoras);
+  let limite = '';
+  if (comLim.length){
+    const agora = Date.now(), c5 = h => h.limites.cincoHoras.consumo || 0;
+    const ult7 = comLim.filter(h => agora - new Date(h.inicio) < 7 * DIA);
+    const tot = comLim.reduce((a, h) => a + c5(h), 0), semanas = Math.max(1, (agora - Math.min(...comLim.map(h => +new Date(h.inicio)))) / (7 * DIA));
+    const dias = [];
+    for (let i = 6; i >= 0; i--){ const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - i); const v = comLim.filter(h => { const t = +new Date(h.inicio); return t >= +d && t < +d + DIA; }).reduce((a, h) => a + c5(h), 0); dias.push({l: d.toLocaleDateString('pt-BR', {weekday:'narrow'}), v}); }
+    const mx = Math.max(...dias.map(d => d.v), .0001);
+    limite = `<div class="grupo"><h3>Limite do Claude</h3>
+      <div class="par"><div><div class="grande">${pct(ult7.reduce((a, h) => a + c5(h), 0))}</div><small>da janela de 5h nos últimos 7 dias</small></div><div><div class="grande">${pct(tot / semanas)}</div><small>média por semana</small></div></div>
+      <div class="dias">${dias.map(d => `<div title="${pct(d.v)}"><b class="${d.v ? '' : 'zero'}" data-h="${Math.max(.04, d.v / mx)}"></b><span>${esc(d.l)}</span></div>`).join('')}</div>
+      <p class="nota">${pct(tot / comLim.length)} por rodada. ${pct(ult7.reduce((a, h) => a + ((h.limites.semanal && h.limites.semanal.consumo) || 0), 0))} do limite semanal nos últimos 7 dias. Uso do Claude em outro lugar durante a rodada entra na conta.</p>
+    </div>`;
   }
-  $('#atualizando').classList.remove('on'); toast('O painel demorou para voltar. Abra o atalho de novo.', true);
+  $('#latCorpo').dataset.h = '';
+  $('#latCorpo').innerHTML = `
+    <div class="grupo"><h3>Organizados</h3>
+      <div class="par"><div><div class="grande">${total}</div><small>arquivos</small></div><div><div class="grande">${ok.length}</div><small>${ok.length === 1 ? 'rodada' : 'rodadas'}</small></div></div>
+    </div>
+    ${ordem.length ? `<div class="grupo"><h3>Para onde foram</h3><div class="barras">${ordem.map(p => `<div><span>${esc(p)}</span><i><b data-w="${cont[p] / max}"></b></i><span class="q">${cont[p]}</span></div>`).join('')}</div></div>` : ''}
+    ${limite}`;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    document.querySelectorAll('.barras b').forEach(b => b.style.transform = `scaleX(${b.dataset.w})`);
+    document.querySelectorAll('.dias b').forEach(b => b.style.transform = `scaleY(${b.dataset.h})`);
+  }));
+}
+
+async function carregarStatus(){ try { status = await api('/api/status'); renderDestaque(); } catch(e){ falha(e); } }
+async function carregarHistorico(){ try { historico = await api('/api/historico'); if (!Array.isArray(historico)) historico = [historico]; renderAtividade(); renderNumeros(); if (lateral === 'numeros') renderNumerosLat(); } catch(e){ falha(e); } }
+async function carregarVersao(forcar){ try { versao = await api('/api/versao' + (forcar ? '?forcar=1' : '')); $('#pontoNovo').hidden = !versao.novidade; } catch {} }
+function agendar(ms){ clearTimeout(timer); timer = setTimeout(carregarStatus, ms); }
+function falha(e){ toast(e.message === 'Failed to fetch' ? 'Painel desconectado' : e.message, true); agendar(10000); }
+async function esperarVoltar(){
+  const t0 = Date.now(); let caiu = false;
+  while (Date.now() - t0 < 120000){
+    await new Promise(r => setTimeout(r, 1500));
+    try { const r = await fetch('/api/ping', {cache:'no-store'}); if (r.ok && (caiu || Date.now() - t0 > 8000)) { location.reload(); return; } } catch { caiu = true; }
+  }
+  $('#cobreAtualizando').classList.remove('on'); toast('O painel demorou para voltar. Abra o atalho de novo.', true);
 }
 async function avisoAtualizacao(){
   let a; try { a = await api('/api/aviso_atualizacao'); } catch { return; }
-  if (!a || !a.para) return;
-  const lista = a.novidades || [];
-  await confirmar('Atualizado! 🎉', lista.length ? 'O que tem de novo:' : `Agora na versão ${a.para}.`, lista, true);
+  if (a && a.para) await confirmar('Atualizado', (a.novidades || []).length ? 'O que mudou:' : 'Você está na versão nova.', a.novidades, true);
 }
 
-async function carregarStatus(){ try { status = await api('/api/status'); renderStatus(); } catch(e){ falhaConexao(e); } }
-async function carregarHistorico(){ try { historico = await api('/api/historico'); if (!Array.isArray(historico)) historico = [historico]; renderHistorico(); renderStats(); } catch(e){ falhaConexao(e); } }
-function agendar(ms){ clearTimeout(timer); timer = setTimeout(carregarStatus, ms); }
-function falhaConexao(e){ toast(e.message === 'Failed to fetch' ? 'Painel desconectado. Abra o atalho de novo.' : e.message, true); agendar(10000); }
-
-$('#sw').onclick = async () => {
+$('#chave').onclick = async () => {
   const ligar = !status.habilitada;
-  if (!ligar && !await confirmar('Pausar a tarefa?', 'Os Downloads param de ser organizados automaticamente até você religar.')) return;
-  try { status = await api('/api/alternar', {habilitar: ligar}); renderStatus(); toast(ligar ? 'Tarefa ligada' : 'Tarefa pausada'); } catch(e){ toast(e.message, true); }
+  try { status = await api('/api/alternar', {habilitar: ligar}); renderDestaque(); toast(ligar ? 'Organizando sozinho de novo' : 'Pausado'); } catch(e){ toast(e.message, true); }
 };
 $('#bRodar').onclick = async () => {
-  try { $('#bRodar').disabled = true; status = await api('/api/executar', {}); estavaRodando = true; renderStatus(); toast(status.modo === 'claude' ? 'Claude chamado. Pode levar uns minutos.' : 'Organizando...'); } catch(e){ toast(e.message, true); $('#bRodar').disabled = false; }
+  try { $('#bRodar').disabled = true; status = await api('/api/executar', {}); estavaRodando = true; renderDestaque(); } catch(e){ toast(e.message, true); $('#bRodar').disabled = false; }
 };
-$('#bHora').onclick = async () => {
-  const hora = $('#iHora').value;
-  try { status = await api('/api/horario', {hora}); renderStatus(); toast('Horário salvo: todo dia às ' + hora); } catch(e){ toast(e.message, true); }
-};
-$('#seg').addEventListener('click', async e => {
-  const b = e.target.closest('button[data-modo]');
-  if (!b || b.disabled || b.dataset.modo === status.modo) return;
-  try { status = await api('/api/modo', {modo: b.dataset.modo}); renderStatus(); toast(status.modo === 'claude' ? 'Modo Claude ativado' : 'Modo só script ativado'); } catch(er){ toast(er.message, true); }
-});
-$('#bAtualizar').onclick = async () => {
-  await carregarVersao(true);
-  if (!versao || !versao.novidade){ toast(versao && versao.erro ? versao.erro : 'Já está na última versão.', !!(versao && versao.erro)); return; }
-  const lista = versao.novidades || [];
-  if (!await confirmar('Atualizar agora?', lista.length ? 'O que vem na versão nova:' : 'Tem uma versão nova no GitHub.', lista)) return;
-  $('#atualizando').classList.add('on'); clearTimeout(timer);
-  try { await api('/api/atualizar', {}); esperarVoltar(); }
-  catch(e){ $('#atualizando').classList.remove('on'); toast('Não consegui atualizar: ' + e.message, true); agendar(6000); }
-};
-document.querySelectorAll('[data-abrir]').forEach(b => b.onclick = () => api('/api/abrir', {alvo: b.dataset.abrir}).catch(e => toast(e.message, true)));
-$('#bSair').onclick = async () => {
-  if (!await confirmar('Fechar o painel?', 'Só o painel desliga. A tarefa continua agendada normalmente.')) return;
-  await api('/api/encerrar', {}).catch(() => {}); clearTimeout(timer); $('#desligado').classList.add('on');
-};
-document.querySelectorAll('.chip').forEach(c => c.onclick = () => { filtro = c.dataset.f; document.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', String(x === c))); renderHistorico(); });
-let tBusca; $('#iBusca').oninput = e => { clearTimeout(tBusca); tBusca = setTimeout(() => { busca = e.target.value.trim().toLowerCase(); renderHistorico(); }, 150); };
-
-$('#lista').addEventListener('click', async e => {
-  const mostrar = e.target.closest('[data-mostrar]');
-  if (mostrar){ api('/api/abrir', {alvo: mostrar.dataset.mostrar}).catch(er => toast(er.message, true)); return; }
-  const desf = e.target.closest('[data-desfazer]');
-  if (desf){
-    if (!await confirmar('Desfazer esta rodada?', 'Os arquivos voltam para a raiz de Downloads. Se a tarefa continuar ligada, eles serão organizados de novo na próxima rodada.')) return;
-    try { const r = await api('/api/desfazer', {id: desf.dataset.desfazer}); const f = (r.falhas || []).length; toast(`${r.restaurados} arquivo(s) de volta na raiz${f ? ', ' + f + ' não encontrado(s)' : ''}`, f > 0); await carregarHistorico(); carregarStatus(); } catch(er){ toast(er.message, true); }
+$('#bAjustes').onclick = () => abrirLateral('ajustes');
+$('#bFechaLat').onclick = fecharLateral; $('#veu').onclick = fecharLateral;
+$('#bMais').onclick = () => { mostrar += 10; renderAtividade(); };
+$('#bBusca').onclick = () => { const b = $('#busca'), abrir = !b.classList.contains('aberta'); b.classList.toggle('aberta', abrir); if (abrir) $('#iBusca').focus(); else { $('#iBusca').value = ''; busca = ''; renderAtividade(); } };
+let tBusca; $('#iBusca').oninput = e => { clearTimeout(tBusca); tBusca = setTimeout(() => { busca = e.target.value.trim().toLowerCase(); renderAtividade(); }, 120); };
+document.addEventListener('click', async e => {
+  const a = e.target.closest('[data-acao]');
+  if (a) return abrirLateral(a.dataset.acao === 'numeros' ? 'numeros' : 'ajustes');
+  const ab = e.target.closest('[data-abrir]');
+  if (ab) return api('/api/abrir', {alvo: ab.dataset.abrir}).catch(er => toast(er.message, true));
+  const mo = e.target.closest('[data-mostrar]');
+  if (mo) return api('/api/abrir', {alvo: mo.dataset.mostrar}).catch(er => toast(er.message, true));
+  const de = e.target.closest('[data-desfazer]');
+  if (de){
+    if (!await confirmar('Desfazer esta rodada?', 'Os arquivos voltam para a raiz de Downloads.')) return;
+    try { const r = await api('/api/desfazer', {id: de.dataset.desfazer}); const f = (r.falhas || []).length; toast(plural(r.restaurados, 'arquivo voltou', 'arquivos voltaram') + (f ? `, ${f} não encontrado${f > 1 ? 's' : ''}` : ''), f > 0); await carregarHistorico(); carregarStatus(); } catch(er){ toast(er.message, true); }
     return;
   }
-  const cab = e.target.closest('.cab');
-  if (cab){
-    const item = cab.closest('.item'), id = item.dataset.id, abrir = !item.classList.contains('aberto');
-    item.classList.toggle('aberto', abrir); cab.setAttribute('aria-expanded', String(abrir));
+  const md = e.target.closest('#seg button[data-modo]');
+  if (md){
+    if (md.disabled || md.dataset.modo === status.modo) return;
+    try { status = await api('/api/modo', {modo: md.dataset.modo}); renderAjustes(); renderDestaque(); } catch(er){ toast(er.message, true); }
+    return;
+  }
+  if (e.target.closest('#bAtualizar')){
+    if (!await confirmar('Atualizar agora?', (versao.novidades || []).length ? 'O que vem na versão nova:' : 'Tem uma versão nova no GitHub.', versao.novidades)) return;
+    fecharLateral(); $('#cobreAtualizando').classList.add('on'); clearTimeout(timer);
+    try { await api('/api/atualizar', {}); esperarVoltar(); } catch(er){ $('#cobreAtualizando').classList.remove('on'); toast('Não deu para atualizar: ' + er.message, true); agendar(6000); }
+    return;
+  }
+  if (e.target.closest('#bSair')){
+    if (!await confirmar('Fechar o painel?', 'A organização automática continua normalmente.')) return;
+    await api('/api/encerrar', {}).catch(() => {}); clearTimeout(timer); $('#cobreFechado').classList.add('on');
+    return;
+  }
+  const lin = e.target.closest('.lin');
+  if (lin){
+    const item = lin.closest('.item'), id = item.dataset.id, abrir = !item.classList.contains('aberto');
+    item.classList.toggle('aberto', abrir); lin.setAttribute('aria-expanded', String(abrir));
     abrir ? abertos.add(id) : abertos.delete(id);
   }
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#fundo').classList.contains('on')) $('#mNao').click(); });
-window.addEventListener('resize', () => status && renderModo());
+document.addEventListener('change', async e => {
+  if (e.target.id !== 'iHora') return;
+  try { status = await api('/api/horario', {hora: e.target.value}); renderDestaque(); toast('Todo dia às ' + e.target.value); } catch(er){ toast(er.message, true); }
+});
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if ($('#modalFundo').classList.contains('on')) ($('#mNao').hidden ? $('#mSim') : $('#mNao')).click();
+  else if (lateral) fecharLateral();
+});
+window.addEventListener('resize', posicionarSeg);
 
 carregarStatus().then(carregarHistorico).then(avisoAtualizacao);
 carregarVersao(false);
 setInterval(() => carregarVersao(false), 30 * 60 * 1000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) carregarVersao(false); });
 </script>
 </body>
 </html>
