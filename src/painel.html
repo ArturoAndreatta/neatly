@@ -62,7 +62,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-of
 .sub{color:var(--txt2);font-size:12.5px;margin-top:2px}
 .ok{color:var(--acc)}.erro{color:var(--err)}
 
-.barra{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:var(--card);border:1px solid var(--borda);border-radius:var(--raio);padding:12px;margin-bottom:24px}
+.barra{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--card);border:1px solid var(--borda);border-radius:var(--raio);padding:12px;margin-bottom:24px}
 .btn{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:10px;background:var(--card2);border:1px solid var(--borda);font-weight:500;transition:transform .12s var(--ease),background .2s,border-color .2s}
 .btn:hover{background:#232935;border-color:#323a48}
 .btn:active{transform:scale(.97)}
@@ -222,7 +222,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-of
 
   <section class="barra">
     <button class="btn prim" id="bRodar"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><span>Rodar agora</span></button>
-    <div class="grupo"><label for="iHora">Horário diário</label><input type="time" id="iHora"><button class="btn" id="bHora">Salvar</button></div>
+    <div class="grupo"><label for="iHora" title="Horário diário">Horário</label><input type="time" id="iHora"><button class="btn" id="bHora">Salvar</button></div>
     <div class="grupo" style="padding-right:4px"><span class="l">Modo</span>
       <div class="seg" id="seg"><span class="marcador" id="marcador"></span><button data-modo="claude" aria-pressed="false">Claude</button><button data-modo="script" aria-pressed="false">Só script</button></div>
     </div>
