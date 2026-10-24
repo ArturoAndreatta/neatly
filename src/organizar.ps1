@@ -18,6 +18,7 @@ $movidos = New-Object System.Collections.ArrayList
 $codigo = 0
 $resumo = ''
 $res = $null
+$limites = $null
 $modo = "$($cfg.modo)"
 
 if ($modo -eq 'claude') {
@@ -44,12 +45,21 @@ Regras: nunca mexa em subpastas nem no conteudo delas; nunca apague nada; ignore
 
     $antes = @(Get-ChildItem -LiteralPath $downloads -File -Force | Select-Object Name, Length)
     Set-Location -LiteralPath $downloads
-    $saida = & $exe -p $prompt --model "$($cfg.modelo)" --permission-mode acceptEdits --permission-prompts none --max-turns 40 --no-session-persistence --output-format json 2>&1
+    [Console]::OutputEncoding = [Text.Encoding]::UTF8
+    # stream-json: alem do resultado, traz os eventos rate_limit_event com o uso das janelas de 5h e semanal
+    $saida = & $exe -p $prompt --model "$($cfg.modelo)" --permission-mode acceptEdits --permission-prompts none --max-turns 40 --no-session-persistence --output-format stream-json --verbose 2>&1
     $codigo = $LASTEXITCODE
 
-    $linhaJson = $saida | Where-Object { $_ -is [string] -and $_.TrimStart().StartsWith('{') } | Select-Object -Last 1
-    if ($linhaJson) { try { $res = $linhaJson | ConvertFrom-Json } catch {} }
-    if ($res -and $res.result) { $resumo = "$($res.result)" } else { $resumo = (($saida | Out-String).Trim()) }
+    $eventosLimite = New-Object System.Collections.ArrayList
+    foreach ($linha in $saida) {
+      if (-not ($linha -is [string]) -or -not $linha.TrimStart().StartsWith('{')) { continue }
+      try { $obj = $linha | ConvertFrom-Json } catch { continue }
+      if ($obj.type -eq 'result') { $res = $obj }
+      elseif ($obj.type -eq 'rate_limit_event') { [void]$eventosLimite.Add($obj.rate_limit_info) }
+    }
+    $limites = Get-ConsumoLimites $eventosLimite
+    if ($res -and $res.result) { $resumo = "$($res.result)" } else { $resumo = (($saida | Where-Object { $_ -is [string] -and -not $_.TrimStart().StartsWith('{') } | Out-String).Trim()) }
+    if (-not $resumo) { $resumo = (($saida | Out-String).Trim()) }
     if ($codigo -eq 0 -and $res -and $res.is_error) { $codigo = 1 }
 
     # Descobre para onde cada arquivo que sumiu da raiz foi parar
@@ -113,6 +123,7 @@ $entrada = [ordered]@{
   resumo = $resumo
   turnos = $(if ($res) { $res.num_turns } else { $null })
   custoUsd = $(if ($res) { $res.total_cost_usd } else { $null })
+  limites = $limites
   movidos = $movidos
   desfeito = $false
 }
