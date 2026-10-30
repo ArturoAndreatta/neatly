@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -32,6 +34,11 @@ class Gaveta extends StatelessWidget {
         curve: Mov.gaveta,
         builder: (context, t, filho) {
           if (t == 0) return const SizedBox.shrink();
+          // Sobra sempre uma faixa do véu à esquerda para clicar e fechar.
+          final largura = math.min(
+            360.0,
+            MediaQuery.sizeOf(context).width - 48,
+          );
           return Stack(
             children: [
               Positioned.fill(
@@ -46,7 +53,7 @@ class Gaveta extends StatelessWidget {
                 top: 0,
                 bottom: 0,
                 right: 0,
-                width: 360,
+                width: largura,
                 child: FractionalTranslation(
                   translation: Offset(reduzir ? 0 : 1 - t, 0),
                   child: Opacity(opacity: reduzir ? t : 1, child: filho),
