@@ -16,8 +16,7 @@ class Estado extends ChangeNotifier {
     ajustes = migrarV1(dados) ?? Ajustes.carregar(dados);
     // Migrado do Neatly 1: a tarefa antiga aponta para o PowerShell.
     if (!Ajustes.arquivo(dados).existsSync()) ajustes.salvar(dados);
-    // Regrava a tarefa apontando para este exe (muda a cada atualização).
-    if (_mexeNoWindows) aplicarAgendamento(ajustes.agendamento);
+    if (_mexeNoWindows) unawaited(_garantirTarefa());
     rodadas = historico.carregar();
     olhar();
     _vigia = Timer.periodic(const Duration(seconds: 4), (_) => olhar());
@@ -30,6 +29,17 @@ class Estado extends ChangeNotifier {
   /// tarefa apontaria para o build de desenvolvimento.
   static bool get _mexeNoWindows =>
       kReleaseMode && !Platform.environment.containsKey('NEATLY_DADOS');
+
+  /// Regrava a tarefa apontando para este exe (muda a cada atualização).
+  /// Logo depois de instalar o Windows às vezes recusa (antivírus ainda
+  /// analisando o exe novo): tenta de novo algumas vezes.
+  Future<void> _garantirTarefa() async {
+    for (final espera in const [1, 5, 20, 60]) {
+      await Future<void>.delayed(Duration(seconds: espera));
+      if (aplicarAgendamento(ajustes.agendamento)) return;
+    }
+  }
+
   final Historico historico;
   late Ajustes ajustes;
   late Timer _vigia;
