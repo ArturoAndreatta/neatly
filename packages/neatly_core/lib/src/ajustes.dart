@@ -15,6 +15,16 @@ enum Modo {
       Modo.values.firstWhere((m) => m.name == v, orElse: () => Modo.script);
 }
 
+/// Cores do app. Sistema acompanha o Windows, inclusive ao vivo.
+enum Tema {
+  sistema,
+  claro,
+  escuro;
+
+  static Tema de(Object? v) =>
+      Tema.values.firstWhere((t) => t.name == v, orElse: () => Tema.sistema);
+}
+
 /// Arrumação automática diária.
 class Agendamento {
   const Agendamento({
@@ -88,6 +98,7 @@ class Ajustes {
     this.agendamento = const Agendamento(),
     this.minutosRecentes = 10,
     this.ignorar = ignorarPadrao,
+    this.tema = Tema.sistema,
   });
 
   factory Ajustes.deJson(Map<String, Object?> j) => Ajustes(
@@ -98,6 +109,7 @@ class Ajustes {
         : const Agendamento(),
     minutosRecentes: (j['minutosRecentes'] as num?)?.toInt() ?? 10,
     ignorar: (j['ignorar'] as List?)?.cast<String>() ?? ignorarPadrao,
+    tema: Tema.de(j['tema']),
   );
 
   /// Pasta organizada; null usa a Downloads do Windows.
@@ -110,18 +122,21 @@ class Ajustes {
   /// Arquivo mexido há menos que isso ainda pode estar baixando.
   final int minutosRecentes;
   final List<String> ignorar;
+  final Tema tema;
 
   Ajustes copyWith({
     String? pasta,
     Modo? modo,
     Agendamento? agendamento,
     int? minutosRecentes,
+    Tema? tema,
   }) => Ajustes(
     pasta: pasta ?? this.pasta,
     modo: modo ?? this.modo,
     agendamento: agendamento ?? this.agendamento,
     minutosRecentes: minutosRecentes ?? this.minutosRecentes,
     ignorar: ignorar,
+    tema: tema ?? this.tema,
   );
 
   Map<String, Object?> toJson() => {
@@ -131,6 +146,7 @@ class Ajustes {
     'agendamento': agendamento.toJson(),
     'minutosRecentes': minutosRecentes,
     'ignorar': ignorar,
+    'tema': tema.name,
   };
 
   static File arquivo(String dados) => File(p.join(dados, 'ajustes.json'));

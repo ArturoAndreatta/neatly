@@ -71,7 +71,7 @@ class _ConteudoHistoricoState extends State<ConteudoHistorico> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: c.menta, width: 1.5),
+                borderSide: BorderSide(color: c.realce, width: 1.5),
               ),
             ),
           ),

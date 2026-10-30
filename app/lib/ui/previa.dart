@@ -194,7 +194,7 @@ class _PastaState extends State<_Pasta> {
                   Icon(
                     _aberta ? Icons.folder_open_rounded : Icons.folder_rounded,
                     size: 18,
-                    color: no.nova ? c.menta : c.suave,
+                    color: no.nova ? c.realce : c.suave,
                   ),
                   const SizedBox(width: 9),
                   Expanded(

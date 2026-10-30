@@ -82,6 +82,12 @@ class Estado extends ChangeNotifier {
     notifyListeners();
   }
 
+  void trocarTema(Tema t) {
+    ajustes = ajustes.copyWith(tema: t);
+    ajustes.salvar(dados);
+    notifyListeners();
+  }
+
   void trocarPasta(String? nova) {
     ajustes = Ajustes(
       pasta: nova,
@@ -89,6 +95,7 @@ class Estado extends ChangeNotifier {
       agendamento: ajustes.agendamento,
       minutosRecentes: ajustes.minutosRecentes,
       ignorar: ajustes.ignorar,
+      tema: ajustes.tema,
     );
     ajustes.salvar(dados);
     varredura = const Varredura(soltos: [], recentes: 0);
