@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:neatly_core/neatly_core.dart';
@@ -117,6 +119,11 @@ class ConteudoAjustes extends StatelessWidget {
         _Nota(
           'Senhas, chaves e .env nunca saem do lugar nem são enviados ao Claude.',
         ),
+        if (claude) ...[
+          const SizedBox(height: 22),
+          _Titulo('Seu jeito de organizar'),
+          _Regras(estado: estado),
+        ],
         const SizedBox(height: 22),
         _Titulo('Versão'),
         _Linha(
@@ -347,6 +354,260 @@ class _Segmentos extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Regras de gosto que o Claude segue, editáveis. Antes de salvar, o
+/// Claude testa a seco: regra que quebra a resposta não entra.
+class _Regras extends StatefulWidget {
+  const _Regras({required this.estado});
+
+  final Estado estado;
+
+  @override
+  State<_Regras> createState() => _RegrasState();
+}
+
+enum _Salvando { nada, testando, salvo }
+
+class _RegrasState extends State<_Regras> {
+  late final _texto = TextEditingController(text: widget.estado.regras);
+  final _foco = FocusNode();
+  late String _base = widget.estado.regras;
+  _Salvando _salvando = _Salvando.nada;
+  String? _erro;
+  Timer? _apagar;
+
+  @override
+  void initState() {
+    super.initState();
+    _texto.addListener(_mudou);
+    _foco.addListener(() => setState(() {}));
+  }
+
+  @override
+  void didUpdateWidget(covariant _Regras old) {
+    super.didUpdateWidget(old);
+    _sincronizar();
+  }
+
+  /// Regra guardada pela prévia: entra na caixa se não houver edição.
+  void _sincronizar() {
+    final atual = widget.estado.regras;
+    if (atual == _base) return;
+    final semEdicao = _texto.text.trim() == _base.trim();
+    _base = atual;
+    if (semEdicao) _texto.text = atual;
+  }
+
+  void _mudou() {
+    if (_erro != null || _salvando == _Salvando.salvo) {
+      _apagar?.cancel();
+      _erro = null;
+      _salvando = _Salvando.nada;
+    }
+    if (mounted) setState(() {});
+  }
+
+  bool get _editado => _texto.text.trim() != _base.trim();
+  bool get _ehPadrao => _texto.text.trim() == regrasPadrao.trim();
+
+  Future<void> _salvar([String? texto]) async {
+    if (_salvando == _Salvando.testando) return;
+    setState(() {
+      _salvando = _Salvando.testando;
+      _erro = null;
+    });
+    final erro = await widget.estado.salvarRegras(texto ?? _texto.text);
+    if (!mounted) return;
+    if (erro == null) {
+      _base = widget.estado.regras;
+      if (texto != null) _texto.text = _base;
+    }
+    setState(() {
+      _erro = erro;
+      _salvando = erro == null ? _Salvando.salvo : _Salvando.nada;
+    });
+    if (erro == null) {
+      _apagar?.cancel();
+      _apagar = Timer(const Duration(milliseconds: 1800), () {
+        if (mounted) setState(() => _salvando = _Salvando.nada);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _apagar?.cancel();
+    _texto.dispose();
+    _foco.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Cores.de(context);
+    final testando = _salvando == _Salvando.testando;
+    final Widget acao = switch (_salvando) {
+      _Salvando.testando => Row(
+        key: const ValueKey('testando'),
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox.square(
+            dimension: 14,
+            child: CircularProgressIndicator(strokeWidth: 2, color: c.menta),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'Testando as regras',
+            style: TextStyle(fontSize: 13, color: c.suave),
+          ),
+        ],
+      ),
+      _Salvando.salvo => Row(
+        key: const ValueKey('salvo'),
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.check_rounded, size: 16, color: c.mentaTinta),
+          const SizedBox(width: 6),
+          Text('Salvo', style: TextStyle(fontSize: 13, color: c.mentaTinta)),
+        ],
+      ),
+      _Salvando.nada when _editado => BotaoPrincipal(
+        key: const ValueKey('salvar'),
+        texto: 'Salvar',
+        onTap: _salvar,
+      ),
+      _Salvando.nada => const SizedBox(key: ValueKey('nada'), height: 38),
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'O Claude segue estas regras ao organizar, inclusive na arrumação '
+          'automática. Uma por linha.',
+          style: TextStyle(fontSize: 12.5, color: c.suave, height: 1.35),
+        ),
+        const SizedBox(height: 10),
+        AnimatedContainer(
+          duration: Mov.rapido,
+          curve: Curves.ease,
+          decoration: BoxDecoration(
+            color: c.superficie,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _erro != null
+                  ? c.aviso
+                  : _foco.hasFocus
+                  ? c.menta
+                  : c.linha,
+              width: _foco.hasFocus ? 1.5 : 1,
+            ),
+          ),
+          child: AnimatedOpacity(
+            duration: Mov.rapido,
+            opacity: testando ? .55 : 1,
+            child: TextField(
+              controller: _texto,
+              focusNode: _foco,
+              readOnly: testando,
+              minLines: 6,
+              maxLines: 14,
+              maxLength: 4000,
+              buildCounter:
+                  (
+                    _, {
+                    required currentLength,
+                    required isFocused,
+                    maxLength,
+                  }) => null,
+              cursorColor: c.menta,
+              style: TextStyle(fontSize: 13, color: c.tinta, height: 1.45),
+              decoration: const InputDecoration(
+                isDense: true,
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.fromLTRB(12, 10, 12, 10),
+              ),
+            ),
+          ),
+        ),
+        AnimatedSize(
+          duration: Mov.base,
+          curve: Mov.saida,
+          alignment: Alignment.topCenter,
+          child: _erro == null
+              ? const SizedBox(width: double.infinity)
+              : Entrada(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 9,
+                      ),
+                      decoration: BoxDecoration(
+                        color: c.avisoFundo,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.info_outline_rounded,
+                            size: 16,
+                            color: c.aviso,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '$_erro Nada foi salvo.',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: c.aviso,
+                                height: 1.35,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            AnimatedOpacity(
+              duration: Mov.rapido,
+              opacity: _ehPadrao ? 0 : 1,
+              child: IgnorePointer(
+                ignoring: _ehPadrao || testando,
+                child: BotaoTexto(
+                  texto: 'Restaurar padrão',
+                  icone: Icons.restart_alt_rounded,
+                  onTap: () => _salvar(''),
+                ),
+              ),
+            ),
+            const Spacer(),
+            AnimatedSwitcher(
+              duration: Mov.rapido,
+              switchInCurve: Mov.saida,
+              transitionBuilder: (w, a) => FadeTransition(
+                opacity: a,
+                child: ScaleTransition(
+                  scale: Tween(begin: .96, end: 1.0).animate(a),
+                  alignment: Alignment.centerRight,
+                  child: w,
+                ),
+              ),
+              child: acao,
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

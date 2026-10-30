@@ -45,10 +45,11 @@ Future<Plano> montarPlano(
   );
   if (soltos.isEmpty && pastas.isEmpty) return soScript();
   try {
-    final destinos = await (claude ?? PlanejadorClaude()).planejar([
-      ...soltos,
-      ...pastas,
-    ], pastasExistentes(raiz, pular: {for (final x in pastas) x.nome}));
+    final destinos = await (claude ?? PlanejadorClaude(regras: ajustes.regras))
+        .planejar([
+          ...soltos,
+          ...pastas,
+        ], pastasExistentes(raiz, pular: {for (final x in pastas) x.nome}));
     return Plano(
       raiz: raiz,
       modo: Modo.claude,
@@ -109,7 +110,7 @@ Future<Plano> montarReorganizacao(
   Ajustes ajustes, {
   PlanejadorClaude? claude,
 }) async {
-  final planejador = claude ?? PlanejadorClaude();
+  final planejador = claude ?? PlanejadorClaude(regras: ajustes.regras);
   final limite = DateTime.now().subtract(
     Duration(minutes: ajustes.minutosRecentes),
   );
@@ -221,6 +222,46 @@ Future<Plano> montarReorganizacao(
       aviso: '${e.mensagem} Nada foi mexido.',
     );
   }
+}
+
+/// Refaz [plano] seguindo o [pedido] da pessoa ("junta Boletos dentro de
+/// Finanças"). Item sem resposta mantém o destino que tinha. Falha do
+/// Claude sobe como [ErroClaude]: o plano de antes continua valendo.
+Future<Plano> ajustarPlano(
+  Plano plano,
+  String pedido,
+  Ajustes ajustes, {
+  PlanejadorClaude? claude,
+}) async {
+  final destinos = await (claude ?? PlanejadorClaude(regras: ajustes.regras))
+      .ajustar(plano.movimentos, pedido, raiz: plano.raiz);
+  final raiz = plano.raiz;
+  String onde(ArquivoSolto a) => _rel(raiz, p.dirname(a.caminho));
+  final pastas = [
+    for (final m in plano.movimentos)
+      if (m.arquivo.pasta) m.arquivo,
+  ];
+  return Plano(
+    raiz: raiz,
+    modo: Modo.claude,
+    movimentos: _comPastas(
+      raiz,
+      [
+        for (final m in plano.movimentos)
+          if (!m.arquivo.pasta)
+            if (destinos[m.arquivo] ?? m.destino case final d)
+              // Destino igual ao lugar atual: nada a mover.
+              if (d.toLowerCase() != onde(m.arquivo)) Movimento(m.arquivo, d),
+      ],
+      pastas,
+      {
+        for (final m in plano.movimentos)
+          if (m.arquivo.pasta) m.arquivo: destinos[m.arquivo] ?? m.destino,
+      },
+    ),
+    aviso: plano.aviso,
+    limpar: plano.limpar,
+  );
 }
 
 /// "nome (2).ext" livre dentro de [pasta]. Nunca sobrescreve.

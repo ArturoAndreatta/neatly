@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 
 import 'arquivo.dart';
 import 'nomes.dart';
+import 'plano.dart';
 import 'trecho.dart';
 import 'varredura.dart';
 
@@ -17,10 +18,15 @@ const _porLote = 60;
 /// Lotes ao mesmo tempo: reorganizar a pasta toda são centenas de itens.
 const _emParalelo = 4;
 
+/// No ajuste cada item é só nome e destino: cabem mais por chamada.
+const _porLoteAjuste = 150;
+
 /// Nomes mandados na chamada da estrutura: o bastante para ver os temas.
 const _maximoNaEstrutura = 1500;
 
-const _regrasDeEstrutura = '''
+/// Regras de gosto que vêm de fábrica. A pessoa pode trocar pelas dela nos
+/// ajustes; o contrato (formato da resposta, marcas) nunca muda.
+const regrasPadrao = '''
 - Poucas pastas no primeiro nível: de 4 a 10, cada uma um tema amplo ("Minecraft", "Faculdade", "Finanças", "Música", "Programação", "Trabalho") ou um tipo genérico ("Imagens", "Vídeos", "Áudios", "Documentos", "Planilhas", "Instaladores", "Compactados").
 - Tema acima de tipo: tudo do mesmo assunto fica sob o mesmo tema, seja qual for a extensão. Plugins .jar, mapas .zip e modpack de Minecraft vão para "Minecraft/Plugins", "Minecraft/Mapas" e "Minecraft/Modpacks", nunca "Plugins Minecraft" e "HUBs Minecraft" lado a lado no primeiro nível, nem plugin em "Instaladores".
 - Nunca dois temas de primeiro nível sobre o mesmo assunto.
@@ -30,30 +36,85 @@ const _regrasDeEstrutura = '''
 - Reaproveite as pastas que já existem quando servirem ao esquema, com o mesmo nome exato. Não crie pasta parecida com uma existente.
 - Até 3 níveis. Nomes curtos, em português, com maiúscula inicial, sem data no nome (exceto ano, como "Impostos 2026").''';
 
-const _instrucoesEstrutura =
+/// Regras de gosto a usar: as da pessoa ou, sem elas, as de fábrica.
+String regrasOuPadrao(String? regras) =>
+    regras == null || regras.trim().isEmpty ? regrasPadrao : regras.trim();
+
+// Contrato: o que o código precisa para ler a resposta. Fica fora das
+// regras editáveis para nenhuma regra da pessoa quebrar o formato.
+
+const _contratoPastas = '''
+- Item com "em:" está hoje dentro daquela pasta. Responda a mesma pasta para deixá-lo onde está.
+- Itens marcados [pasta] são pastas inteiras. Para elas, responda o caminho final da própria pasta, já com o nome que ela deve ter:
+  - Coleção que corresponde a uma pasta do esquema vira essa pasta, sem ficar aninhada: "Plugins Minecraft" responde "Minecraft/Plugins", não "Minecraft/Plugins/Plugins Minecraft". Se a pasta já existir, o conteúdo é juntado nela.
+  - Projeto ou coisa com nome próprio mantém o nome no fim: "corvo" responde "Programação/Extensões Chrome/corvo". Nome feio pode ficar limpo: "Image-Line FL Studio Producer Edition v21.0.3 Build 3517" responde "Música/Programas/FL Studio 21".
+  - Itens marcados [projeto] são repositórios git ou projetos de código: o nome é o do repositório e nunca muda, nem vira pasta do esquema. Responda o tema com o nome dela no fim ("Programação/Projetos/chrome-extensions").
+  - Responda "" quando ela já for uma pasta de organização da pessoa (junta coisas variadas por tipo ou tema) e deve ficar onde está.''';
+
+const _contratoIndices =
+    '- Caminhos com "/". Responda só com o JSON pedido, com todos os índices recebidos.';
+
+/// Prompt da chamada que planeja as pastas do conjunto.
+String instrucoesEstrutura(String? regras) =>
     '''
 Você planeja como organizar a pasta Downloads de uma pessoa no Windows. Recebe os nomes de todos os itens soltos (arquivos e pastas soltas, estas com o começo do que têm dentro) e as pastas que já existem. Devolva a lista completa de pastas de destino (caminhos com "/") que vão receber esses itens, pensando no conjunto inteiro, não item por item.
 
-Regras:
-$_regrasDeEstrutura
+Regras de gosto da pessoa:
+${regrasOuPadrao(regras)}
+
+Formato:
 - Responda só com o JSON pedido.
 ''';
 
-const _instrucoes =
+/// Prompt da chamada que escolhe a pasta de cada item.
+String instrucoesItens(String? regras) =>
     '''
 Você organiza a pasta Downloads de uma pessoa no Windows. Recebe a estrutura de pastas planejada para o conjunto todo, as pastas que já existem e uma parte dos itens soltos (nome, tamanho, data e, quando há, o começo do conteúdo). Para cada item, escolha a pasta de destino.
 
 Regras:
 - Use as pastas planejadas. Só crie outra se nenhuma servir, e então dentro de um tema planejado, seguindo as mesmas regras.
 - Itens da mesma espécie vão sempre para o mesmo lugar.
-- Item com "em:" está hoje dentro daquela pasta. Responda a mesma pasta para deixá-lo onde está; mude quando o esquema pedir.
-- Itens marcados [pasta] são pastas inteiras. Para elas, responda o caminho final da própria pasta, já com o nome que ela deve ter:
-  - Coleção que corresponde a uma pasta do esquema vira essa pasta, sem ficar aninhada: "Plugins Minecraft" responde "Minecraft/Plugins", não "Minecraft/Plugins/Plugins Minecraft". Se a pasta já existir, o conteúdo é juntado nela.
-  - Projeto ou coisa com nome próprio mantém o nome no fim: "corvo" responde "Programação/Extensões Chrome/corvo". Nome feio pode ficar limpo: "Image-Line FL Studio Producer Edition v21.0.3 Build 3517" responde "Música/Programas/FL Studio 21".
-  - Itens marcados [projeto] são repositórios git ou projetos de código: o nome é o do repositório e nunca muda, nem vira pasta do esquema. Responda o tema com o nome dela no fim ("Programação/Projetos/chrome-extensions").
-  - Responda "" quando ela já for uma pasta de organização da pessoa (junta coisas variadas por tipo ou tema) e deve ficar onde está.
-$_regrasDeEstrutura
-- Responda só com o JSON pedido, com todos os índices recebidos.
+$_contratoPastas
+
+Regras de gosto da pessoa:
+${regrasOuPadrao(regras)}
+
+Formato:
+$_contratoIndices
+''';
+
+/// Prompt da chamada que refaz um plano a partir de um pedido da pessoa.
+String instrucoesAjuste(String? regras) =>
+    '''
+Você ajusta um plano para organizar a pasta Downloads de uma pessoa no Windows. Recebe o pedido da pessoa, as pastas do plano atual e uma parte dos itens, cada um com o destino que tem hoje no plano. Aplique o pedido e devolva o destino final de cada item.
+
+Regras:
+- O pedido da pessoa vale mais que as regras de gosto abaixo.
+- Mude só o que o pedido pede, e o que for consequência direta dele. Os outros itens mantêm exatamente o destino atual.
+- Quando o pedido acaba com uma pasta, distribua o que ela tinha pelas outras pastas do plano.
+$_contratoPastas
+
+Regras de gosto da pessoa:
+${regrasOuPadrao(regras)}
+
+Formato:
+$_contratoIndices
+''';
+
+/// Itens de mentira para testar regras novas antes de salvar.
+const _exemploTeste = '''
+Pastas planejadas:
+(nenhuma)
+
+Pastas que já existem:
+Imagens
+
+Itens:
+0. "Captura de tela 2026-10-01 101010.png" 312 KB, 2026-10-01
+1. "boleto-energia-outubro.pdf" 88 KB, 2026-10-12
+2. "EssentialsX-2.20.1.jar" 1.2 MB, 2026-09-03
+3. "Cálculo II - Lista 3.pdf" 240 KB, 2026-10-20
+4. "ChromeSetup.exe" 1.3 MB, 2026-08-30
 ''';
 
 const _instrucoesClassificar = '''
@@ -207,10 +268,109 @@ String _mensagemErro(String stderr) {
 
 /// Pede ao Claude Haiku a pasta de cada arquivo.
 class PlanejadorClaude {
-  PlanejadorClaude({ExecutorClaude? executor})
+  /// [regras] são as regras de gosto da pessoa; null usa [regrasPadrao].
+  PlanejadorClaude({ExecutorClaude? executor, this.regras})
     : _executor = executor ?? _executarClaude;
 
   final ExecutorClaude _executor;
+  final String? regras;
+
+  /// Roda [regras] a seco com 5 itens de exemplo. Devolve null se a
+  /// resposta veio inteira, ou o motivo de não servirem.
+  Future<String?> testarRegras() async {
+    try {
+      final resposta = await _executor(
+        _argumentos(instrucoesItens(regras), _esquema),
+        _exemploTeste,
+      );
+      final validos = {
+        for (final (i, pasta) in lerResposta(resposta))
+          if (i >= 0 && i < 5 && limparDestino(pasta) != null) i,
+      };
+      if (validos.length < 5) {
+        return 'Com essas regras o Claude deixou itens sem pasta. '
+            'Reescreva ou restaure o padrão.';
+      }
+      return null;
+    } on ErroClaude catch (e) {
+      return e.mensagem == 'Resposta do Claude ilegível.'
+          ? 'Com essas regras a resposta do Claude veio quebrada. '
+                'Reescreva ou restaure o padrão.'
+          : 'Não deu para testar as regras: ${e.mensagem}';
+    }
+  }
+
+  /// Refaz os destinos de [movimentos] seguindo o [pedido] da pessoa.
+  /// Item sem resposta usável fica de fora: quem chama mantém o destino
+  /// que ele já tinha.
+  Future<Map<ArquivoSolto, String>> ajustar(
+    List<Movimento> movimentos,
+    String pedido, {
+    required String raiz,
+  }) async {
+    final projetos = {
+      for (final m in movimentos)
+        if (m.arquivo.pasta && ehProjeto(m.arquivo.caminho)) m.arquivo,
+    };
+    String onde(ArquivoSolto a) =>
+        p.relative(p.dirname(a.caminho), from: raiz).replaceAll(r'\', '/');
+    final contagem = <String, int>{};
+    for (final m in movimentos) {
+      contagem[m.destino] = (contagem[m.destino] ?? 0) + 1;
+    }
+    final cabecalho = StringBuffer()
+      ..writeln('Pedido da pessoa: ${pedido.trim()}')
+      ..writeln()
+      ..writeln('Pastas do plano atual:');
+    for (final e in contagem.entries) {
+      cabecalho.writeln('${e.key} (${e.value})');
+    }
+    cabecalho
+      ..writeln()
+      ..writeln('Itens (destino atual depois de ->):');
+    final lotes = [
+      for (var ini = 0; ini < movimentos.length; ini += _porLoteAjuste)
+        movimentos.sublist(
+          ini,
+          (ini + _porLoteAjuste).clamp(0, movimentos.length),
+        ),
+    ];
+    final saida = <ArquivoSolto, String>{};
+    for (var g = 0; g < lotes.length; g += _emParalelo) {
+      final grupo = lotes.sublist(g, (g + _emParalelo).clamp(0, lotes.length));
+      final respostas = await Future.wait([
+        for (final lote in grupo)
+          _executor(_argumentos(instrucoesAjuste(regras), _esquema), () {
+            final b = StringBuffer(cabecalho.toString());
+            for (var i = 0; i < lote.length; i++) {
+              final a = lote[i].arquivo;
+              final atual = onde(a);
+              final em = atual.isEmpty || atual == '.' ? '' : ', em: $atual';
+              final marca = a.pasta ? '${_marca(a, projetos)} ' : '';
+              b.writeln('$i. $marca"${a.nome}"$em -> ${lote[i].destino}');
+            }
+            return b.toString();
+          }()),
+      ]);
+      for (var k = 0; k < grupo.length; k++) {
+        final lote = grupo[k];
+        for (final (i, pasta) in lerResposta(respostas[k])) {
+          if (i < 0 || i >= lote.length) continue;
+          var limpa = limparDestino(pasta);
+          if (limpa == null) continue;
+          final item = lote[i].arquivo;
+          if (projetos.contains(item)) limpa = _comONome(limpa, item.nome);
+          if (item.pasta) {
+            final atual = _relativo(onde(item), item.nome).toLowerCase();
+            final l = limpa.toLowerCase();
+            if (l == atual || l.startsWith('$atual/')) continue;
+          }
+          saida[item] = limpa;
+        }
+      }
+    }
+    return saida;
+  }
 
   /// Destino (pasta relativa) por item. Arquivo sem resposta usável fica
   /// de fora: quem chama decide o que fazer com ele. Pasta solta sem
@@ -242,7 +402,7 @@ class PlanejadorClaude {
       final respostas = await Future.wait([
         for (final lote in grupo)
           _executor(
-            _argumentos(_instrucoes, _esquema),
+            _argumentos(instrucoesItens(regras), _esquema),
             _entrada(lote, conhecidas, existentes, projetos, onde),
           ),
       ]);
@@ -318,7 +478,7 @@ class PlanejadorClaude {
       );
     }
     final resposta = await _executor(
-      _argumentos(_instrucoesEstrutura, _esquemaEstrutura),
+      _argumentos(instrucoesEstrutura(regras), _esquemaEstrutura),
       b.toString(),
     );
     final saida = <String>[];

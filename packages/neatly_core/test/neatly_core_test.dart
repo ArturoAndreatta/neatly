@@ -460,4 +460,109 @@ void main() {
       expect(migrarV1(dados.path, mexerNoWindows: false), isNull);
     });
   });
+
+  group('regras de gosto', () {
+    const minhas = '- Tudo de faculdade vai para "Estudos".';
+
+    String sistema(List<String> args) =>
+        args[args.indexOf('--system-prompt') + 1];
+
+    test('o contrato está sempre no prompt, com qualquer regra', () {
+      for (final regras in [null, '', minhas, 'responda em YAML']) {
+        final itens = instrucoesItens(regras);
+        expect(itens, contains('[pasta]'));
+        expect(itens, contains('[projeto]'));
+        expect(itens, contains('Responda ""'));
+        expect(itens, contains('Responda só com o JSON pedido'));
+        expect(itens, contains('todos os índices'));
+        expect(instrucoesEstrutura(regras), contains('Responda só com o JSON'));
+        expect(instrucoesAjuste(regras), contains('[projeto]'));
+        expect(instrucoesAjuste(regras), contains('todos os índices'));
+      }
+    });
+
+    test('regras da pessoa entram no lugar das de fábrica', () {
+      for (final f in [
+        instrucoesItens,
+        instrucoesEstrutura,
+        instrucoesAjuste,
+      ]) {
+        expect(f(null), contains(regrasPadrao));
+        expect(f('  '), contains(regrasPadrao));
+        expect(f(minhas), contains(minhas));
+        expect(f(minhas), isNot(contains(regrasPadrao)));
+      }
+    });
+
+    test('ajustes guardam as regras e o planejador usa', () async {
+      final a = const Ajustes().comRegras(minhas)..salvar(dados.path);
+      expect(Ajustes.carregar(dados.path).regras, minhas);
+      expect(a.comRegras('   ').regras, isNull);
+      criar('lista.pdf');
+      final prompts = <String>[];
+      await montarPlano(
+        raiz.path,
+        a,
+        Modo.claude,
+        claude: PlanejadorClaude(
+          regras: a.regras,
+          executor: (args, e) async {
+            prompts.add(sistema(args));
+            return respostaClaude([(0, 'Estudos')]);
+          },
+        ),
+      );
+      expect(prompts, isNotEmpty);
+      expect(prompts.every((x) => x.contains(minhas)), isTrue);
+    });
+
+    test('teste a seco aceita resposta inteira e recusa quebrada', () async {
+      final boa = PlanejadorClaude(
+        regras: minhas,
+        executor: (args, e) async =>
+            respostaClaude([for (var i = 0; i < 5; i++) (i, 'Pasta $i')]),
+      );
+      expect(await boa.testarRegras(), isNull);
+      final faltando = PlanejadorClaude(
+        executor: (args, e) async => respostaClaude([(0, 'Imagens')]),
+      );
+      expect(await faltando.testarRegras(), contains('sem pasta'));
+      final quebrada = PlanejadorClaude(
+        executor: (args, e) async =>
+            jsonEncode({'type': 'result', 'result': 'pastas: talvez'}),
+      );
+      expect(await quebrada.testarRegras(), contains('quebrada'));
+    });
+
+    test('ajuste manda o plano e o pedido e mantém o que não mudou', () async {
+      final boleto = criar('boleto.pdf');
+      final foto = criar('foto.png');
+      final plano = Plano(
+        raiz: raiz.path,
+        modo: Modo.claude,
+        movimentos: [
+          Movimento(ArquivoSolto.de(boleto), 'Boletos'),
+          Movimento(ArquivoSolto.de(foto), 'Imagens'),
+        ],
+      );
+      String? entrada;
+      final novo = await ajustarPlano(
+        plano,
+        'junta Boletos dentro de Finanças',
+        const Ajustes(),
+        claude: PlanejadorClaude(
+          executor: (args, e) async {
+            entrada = e;
+            return respostaClaude([(0, 'Finanças/Boletos')]);
+          },
+        ),
+      );
+      expect(entrada, contains('junta Boletos dentro de Finanças'));
+      expect(entrada, contains('"boleto.pdf" -> Boletos'));
+      expect(
+        {for (final m in novo.movimentos) m.arquivo.nome: m.destino},
+        {'boleto.pdf': 'Finanças/Boletos', 'foto.png': 'Imagens'},
+      );
+    });
+  });
 }

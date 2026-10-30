@@ -88,6 +88,7 @@ class Ajustes {
     this.agendamento = const Agendamento(),
     this.minutosRecentes = 10,
     this.ignorar = ignorarPadrao,
+    this.regras,
   });
 
   factory Ajustes.deJson(Map<String, Object?> j) => Ajustes(
@@ -98,6 +99,7 @@ class Ajustes {
         : const Agendamento(),
     minutosRecentes: (j['minutosRecentes'] as num?)?.toInt() ?? 10,
     ignorar: (j['ignorar'] as List?)?.cast<String>() ?? ignorarPadrao,
+    regras: j['regras'] as String?,
   );
 
   /// Pasta organizada; null usa a Downloads do Windows.
@@ -111,6 +113,9 @@ class Ajustes {
   final int minutosRecentes;
   final List<String> ignorar;
 
+  /// Regras de gosto da pessoa para o modo Claude; null usa as de fábrica.
+  final String? regras;
+
   Ajustes copyWith({
     String? pasta,
     Modo? modo,
@@ -122,6 +127,17 @@ class Ajustes {
     agendamento: agendamento ?? this.agendamento,
     minutosRecentes: minutosRecentes ?? this.minutosRecentes,
     ignorar: ignorar,
+    regras: regras,
+  );
+
+  /// Cópia com outras regras de gosto (null volta às de fábrica).
+  Ajustes comRegras(String? regras) => Ajustes(
+    pasta: pasta,
+    modo: modo,
+    agendamento: agendamento,
+    minutosRecentes: minutosRecentes,
+    ignorar: ignorar,
+    regras: regras == null || regras.trim().isEmpty ? null : regras.trim(),
   );
 
   Map<String, Object?> toJson() => {
@@ -131,6 +147,7 @@ class Ajustes {
     'agendamento': agendamento.toJson(),
     'minutosRecentes': minutosRecentes,
     'ignorar': ignorar,
+    'regras': ?regras,
   };
 
   static File arquivo(String dados) => File(p.join(dados, 'ajustes.json'));
