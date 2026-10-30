@@ -325,6 +325,13 @@ class _LinhaAgenda extends StatelessWidget {
   final Estado estado;
   final VoidCallback onTap;
 
+  static String _texto(Agendamento a) => switch ((a.ativo, a.aoLigar)) {
+    (true, true) => 'Arruma sozinho ao ligar e às ${a.horario}',
+    (true, false) => 'Arruma sozinho todo dia às ${a.horario}',
+    (false, true) => 'Arruma sozinho ao ligar o PC',
+    (false, false) => 'Arrumação automática desligada',
+  };
+
   @override
   Widget build(BuildContext context) {
     final c = Cores.de(context);
@@ -341,16 +348,22 @@ class _LinhaAgenda extends StatelessWidget {
             Icon(
               a.ativo
                   ? Icons.schedule_rounded
+                  : a.aoLigar
+                  ? Icons.power_settings_new_rounded
                   : Icons.do_not_disturb_on_outlined,
               size: 15,
               color: c.fraca,
             ),
             const SizedBox(width: 7),
-            Text(
-              a.ativo
-                  ? 'Arruma sozinho todo dia às ${a.horario}'
-                  : 'Arrumação automática desligada',
-              style: TextStyle(fontSize: 13, color: c.fraca),
+            AnimatedSwitcher(
+              duration: Mov.rapido,
+              transitionBuilder: (w, anim) =>
+                  FadeTransition(opacity: anim, child: w),
+              child: Text(
+                _texto(a),
+                key: ValueKey(_texto(a)),
+                style: TextStyle(fontSize: 13, color: c.fraca),
+              ),
             ),
             const SizedBox(width: 2),
             Icon(Icons.chevron_right_rounded, size: 16, color: c.fraca),

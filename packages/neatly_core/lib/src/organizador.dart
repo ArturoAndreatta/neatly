@@ -20,6 +20,42 @@ Set<String> pastasDoNeatly(String raiz, List<Rodada> rodadas) => {
         if (p.equals(p.dirname(d), raiz)) p.basename(d),
 };
 
+/// Há algo solto em [raiz] para o [modo] mexer: arquivos (fora os ignorados
+/// e os recentes) e, no Claude, também pastas soltas. Sem nada, a arrumação
+/// automática nem chama o Claude.
+bool temOQueOrganizar(
+  String raiz,
+  Ajustes ajustes,
+  Modo modo, {
+  List<Rodada> rodadas = const [],
+  DateTime? agora,
+}) {
+  if (varrer(raiz, ajustes, agora: agora).soltos.isNotEmpty) return true;
+  if (modo == Modo.script) return false;
+  return pastasSoltas(
+    raiz,
+    ajustes,
+    protegidas: pastasDoNeatly(raiz, rodadas),
+    agora: agora,
+  ).isNotEmpty;
+}
+
+/// Janela em que a arrumação automática não repete: o gatilho de logon e a
+/// diária atrasada costumam disparar no mesmo logon.
+const janelaRepeticao = Duration(minutes: 30);
+
+/// Arrumou (de qualquer jeito) há menos de [janela]. [rodadas] vem do
+/// histórico, da mais nova para a mais velha.
+bool arrumouHaPouco(
+  List<Rodada> rodadas, {
+  DateTime? agora,
+  Duration janela = janelaRepeticao,
+}) {
+  if (rodadas.isEmpty) return false;
+  final limite = (agora ?? DateTime.now()).subtract(janela);
+  return rodadas.first.quando.isAfter(limite);
+}
+
 /// Monta o plano de [raiz] no [modo] pedido. No modo Claude, o que o Claude
 /// não souber (ou se ele falhar) vai pelas regras do Script, e as pastas
 /// soltas (fora as de [rodadas]) também podem ir inteiras para um tema.

@@ -89,23 +89,59 @@ class ConteudoAjustes extends StatelessWidget {
                         ),
                       ),
                     ),
-                    _Linha(
-                      texto: 'Modo',
-                      fim: _Segmentos(
-                        opcoes: Modo.values,
-                        valor: a.modo,
-                        nome: nomeModo,
-                        aoTrocar: (m) =>
-                            estado.trocarAgendamento(a.copyWith(modo: m)),
-                      ),
-                    ),
-                    if (a.modo == Modo.claude && !claude)
-                      _Nota(
-                        'Sem o Claude Code instalado, a arrumação automática usa o Script.',
-                        cor: c.aviso,
-                      ),
                   ],
                 ),
+        ),
+        _Linha(
+          texto: 'Ao ligar o PC',
+          detalhe: 'Uns minutos depois de entrar, se tiver algo solto.',
+          fim: Switch(
+            value: a.aoLigar,
+            activeThumbColor: c.sobreMenta,
+            activeTrackColor: c.menta,
+            onChanged: (v) => estado.trocarAgendamento(a.copyWith(aoLigar: v)),
+          ),
+        ),
+        AnimatedSize(
+          duration: Mov.base,
+          curve: Mov.saida,
+          alignment: Alignment.topCenter,
+          child: AnimatedSwitcher(
+            duration: Mov.base,
+            switchInCurve: Mov.saida,
+            transitionBuilder: (w, anim) => FadeTransition(
+              opacity: anim,
+              child: SlideTransition(
+                position: Tween(
+                  begin: const Offset(0, -.08),
+                  end: Offset.zero,
+                ).animate(anim),
+                child: w,
+              ),
+            ),
+            child: !a.algum
+                ? const SizedBox(width: double.infinity)
+                : Column(
+                    key: const ValueKey('modo'),
+                    children: [
+                      _Linha(
+                        texto: 'Modo',
+                        fim: _Segmentos(
+                          opcoes: Modo.values,
+                          valor: a.modo,
+                          nome: nomeModo,
+                          aoTrocar: (m) =>
+                              estado.trocarAgendamento(a.copyWith(modo: m)),
+                        ),
+                      ),
+                      if (a.modo == Modo.claude && !claude)
+                        _Nota(
+                          'Sem o Claude Code instalado, a arrumação automática usa o Script.',
+                          cor: c.aviso,
+                        ),
+                    ],
+                  ),
+          ),
         ),
         const SizedBox(height: 22),
         _Titulo('Aparência'),

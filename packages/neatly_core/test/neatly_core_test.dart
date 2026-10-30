@@ -416,6 +416,87 @@ void main() {
     });
   });
 
+  group('arrumação automática', () {
+    test('pasta vazia ou só com ignorados e recentes: nada a fazer', () {
+      const ajustes = Ajustes();
+      expect(temOQueOrganizar(raiz.path, ajustes, Modo.script), isFalse);
+      criar('desktop.ini');
+      criar('chave.pem');
+      criar('baixando.pdf', idade: const Duration(minutes: 2));
+      for (final m in Modo.values) {
+        expect(temOQueOrganizar(raiz.path, ajustes, m), isFalse);
+      }
+      criar('nota.pdf');
+      for (final m in Modo.values) {
+        expect(temOQueOrganizar(raiz.path, ajustes, m), isTrue);
+      }
+    });
+
+    test('pasta solta só conta no Claude, e não as do Neatly', () {
+      const ajustes = Ajustes();
+      final velha = DateTime.now().subtract(const Duration(hours: 1));
+      Directory(p.join(raiz.path, 'Imagens')).createSync();
+      final projeto = Directory(p.join(raiz.path, 'projeto'))..createSync();
+      final tema = Directory(p.join(raiz.path, 'Viagem'))..createSync();
+      expect(temOQueOrganizar(raiz.path, ajustes, Modo.script), isFalse);
+      // Diretório criado agora é "recente": olha uma hora à frente.
+      final depois = DateTime.now().add(const Duration(hours: 1));
+      expect(
+        temOQueOrganizar(raiz.path, ajustes, Modo.claude, agora: depois),
+        isTrue,
+      );
+      projeto.deleteSync();
+      final rodada = Rodada(
+        id: '1',
+        quando: velha,
+        modo: Modo.claude,
+        agendada: true,
+        raiz: raiz.path,
+        mudancas: const [],
+        pastasCriadas: [tema.path],
+      );
+      expect(
+        temOQueOrganizar(
+          raiz.path,
+          ajustes,
+          Modo.claude,
+          rodadas: [rodada],
+          agora: depois,
+        ),
+        isFalse,
+      );
+    });
+
+    test('não repete se arrumou há poucos minutos', () {
+      final agora = DateTime(2026, 10, 30, 9);
+      Rodada em(Duration atras) => Rodada(
+        id: '$atras',
+        quando: agora.subtract(atras),
+        modo: Modo.script,
+        agendada: true,
+        raiz: raiz.path,
+        mudancas: const [],
+        pastasCriadas: const [],
+      );
+      expect(arrumouHaPouco(const [], agora: agora), isFalse);
+      expect(
+        arrumouHaPouco([em(const Duration(minutes: 3))], agora: agora),
+        isTrue,
+      );
+      expect(
+        arrumouHaPouco([
+          em(const Duration(hours: 5)),
+          em(const Duration(minutes: 3)),
+        ], agora: agora),
+        isFalse,
+      );
+      expect(
+        arrumouHaPouco([em(const Duration(minutes: 31))], agora: agora),
+        isFalse,
+      );
+    });
+  });
+
   group('ajustes, agendamento e versão', () {
     test('salva e carrega', () {
       const Ajustes(
@@ -452,6 +533,41 @@ void main() {
       expect(xml, contains('<StartWhenAvailable>true</StartWhenAvailable>'));
       expect(xml, contains(r'C:\A &amp; B\neatly.exe'));
       expect(xml, contains('--agendado'));
+    });
+
+    test('ao ligar o PC é salvo e sai do JSON antigo desligado', () {
+      const Ajustes(
+        agendamento: Agendamento(ativo: false, aoLigar: true),
+      ).salvar(dados.path);
+      final a = Ajustes.carregar(dados.path).agendamento;
+      expect(a.aoLigar, isTrue);
+      expect(a.algum, isTrue);
+      expect(Agendamento.deJson({'ativo': true}).aoLigar, isFalse);
+      expect(const Agendamento(ativo: false).algum, isFalse);
+    });
+
+    test('XML com gatilho de logon atrasado, só do usuário', () {
+      final so = xmlTarefa(
+        const Agendamento(ativo: false, aoLigar: true),
+        r'C:\neatly.exe',
+        usuario: r'PC\Ana & Bia',
+      );
+      expect(so, contains('<LogonTrigger>'));
+      expect(so, contains('<Delay>PT2M</Delay>'));
+      expect(so, contains(r'<UserId>PC\Ana &amp; Bia</UserId>'));
+      expect(so, isNot(contains('<CalendarTrigger>')));
+      expect(so, contains('ao ligar o PC'));
+
+      final ambos = xmlTarefa(
+        const Agendamento(aoLigar: true),
+        r'C:\neatly.exe',
+      );
+      expect(ambos, contains('<CalendarTrigger>'));
+      expect(ambos, contains('<LogonTrigger>'));
+      expect(ambos, isNot(contains('<UserId>')));
+
+      final diaria = xmlTarefa(const Agendamento(), r'C:\neatly.exe');
+      expect(diaria, isNot(contains('<LogonTrigger>')));
     });
 
     test('compara versões', () {
