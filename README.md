@@ -21,7 +21,9 @@
   <img src="docs/previa.jpg" width="300" alt="Prévia com as pastas que o Claude escolheu">
 </picture>
 
-[**Baixar**](https://github.com/ArturoAndreatta/neatly/releases/latest/download/NeatlySetup.exe) · [Como funciona](#como-funciona) · [Perguntas](#perguntas)
+### [Baixar o Neatly para Windows](https://github.com/ArturoAndreatta/neatly/releases/latest/download/NeatlySetup.exe)
+
+[Instalar](#instalar) · [Modo Claude](#modo-claude) · [Privacidade](#o-que-sai-do-seu-computador) · [Perguntas](#perguntas) · [Desenvolver](#desenvolver)
 
 </div>
 
@@ -29,65 +31,63 @@
 
 ## O que ele faz
 
-O Neatly pega os arquivos soltos na pasta Downloads e guarda cada um numa pasta. Você escolhe como:
+O Neatly pega os arquivos soltos na pasta Downloads e guarda cada um numa pasta. Antes de mover qualquer coisa, mostra uma **prévia** com a árvore de pastas. Um clique e pronto.
 
-- **Claude:** o Claude Haiku 5.5 lê o nome e o começo de cada arquivo e cria pastas por assunto, com subpastas quando faz sentido: `Faculdade/Cálculo II`, `Finanças/Boletos`, `Viagens/Florianópolis`. Ele reaproveita as pastas que você já tem.
-- **Script:** separa por tipo, na hora e sem internet: `Imagens`, `Documentos`, `Vídeos`, `Instaladores`... Também reconhece capturas de tela, arquivos do WhatsApp, boletos e notas fiscais.
+Dois jeitos de arrumar:
 
-Antes de mover qualquer coisa, aparece uma **prévia** com a árvore de pastas. Um clique e pronto.
+- **Script:** separa por tipo, na hora e sem internet: `Imagens`, `Documentos`, `Vídeos`, `Instaladores`... Reconhece capturas de tela, arquivos do WhatsApp, boletos e notas fiscais. Funciona para qualquer pessoa, sem conta nenhuma.
+- **Claude:** o Claude Haiku 5.5 lê o nome e o começo de cada arquivo e cria pastas por assunto, com subpastas quando faz sentido: `Faculdade/Cálculo II`, `Finanças/Boletos`, `Viagens/Florianópolis`. Reaproveita as pastas que você já tem e aceita pedidos na prévia ("junta as fotos da viagem numa pasta só"). Precisa de uma conta do Claude, [veja abaixo](#modo-claude).
 
-- **Arruma sozinho todo dia** no horário que você escolher. PC desligado na hora? Arruma assim que ligar
+E mais:
+
+- **Arruma sozinho** todo dia no horário que você escolher e, se quiser, ao ligar o PC. PC desligado na hora? Arruma assim que ligar
 - **Nunca apaga nada.** Só move, nunca sobrescreve (nome repetido vira `nome (2).ext`) e não mexe em subpastas nem em arquivo que ainda está baixando
-- **Desfaz qualquer arrumação**, apagando as pastas que ela criou
+- **Desfaz qualquer arrumação** pelo histórico, apagando as pastas que ela criou
 - **Acha qualquer arquivo guardado:** digite parte do nome no histórico
 - **Deixa segredo em paz:** `.env`, `.pem`, `.key` e afins ficam onde estão e nunca são enviados ao Claude
+- **Seu jeito de organizar:** escreva as suas regras ("trabalho sempre em Trabalho/Ano") e o Claude segue
+- **Tema claro e escuro**, acompanhando o Windows
 - **Se atualiza sozinho** quando sai versão nova
 
 ## Instalar
 
 1. **[Baixe o NeatlySetup.exe](https://github.com/ArturoAndreatta/neatly/releases/latest/download/NeatlySetup.exe)**
-2. Abra e clique em **Instalar**
+2. Abra e clique em **Instalar**. Não precisa ser administrador
 
-Não precisa ser administrador. Quem usava o Neatly 1 (o painel no navegador) recebe o novo pelo botão Atualizar de sempre: modo e horário vêm junto.
+> **Aviso do SmartScreen:** o Windows avisa na primeira vez porque o instalador não tem assinatura digital paga. Clique em **Mais informações** e depois em **Executar assim mesmo**. O código inteiro está neste repositório, e o instalador é gerado pelo [GitHub Actions](.github/workflows/release.yml) a partir dele.
 
-> O Windows pode mostrar o aviso do SmartScreen na primeira vez, como faz com qualquer programa novo. Clique em **Mais informações** e **Executar assim mesmo**. O código inteiro está aqui.
+Pronto: o modo Script já funciona. Para o modo Claude, siga a próxima seção.
 
-## Claude ou Script
+## Modo Claude
+
+Você precisa de uma assinatura **Claude Pro, Max, Team ou Enterprise**. O Neatly usa o [Claude Code](https://claude.com/claude-code) instalado no seu PC, com a sua conta, então não há chave de API nem cobrança à parte: cada arrumação gasta um pouco do seu limite de uso, no Haiku, o modelo mais leve.
+
+O Neatly cuida da instalação:
+
+1. Abra **Ajustes** (a engrenagem) e desça até **Claude**
+2. **Claude Code não instalado?** Clique em **Instalar**. Abre uma janela com o instalador oficial da Anthropic e, no fim, o login
+3. **Nenhuma conta vinculada?** Clique em **Vincular conta**. O navegador abre para você entrar com a sua conta do Claude
+4. Volte ao Neatly. Assim que o login termina, aparece **Conta do Claude vinculada** com o seu e-mail
+
+Para trocar de conta, rode `claude auth logout` num terminal e vincule de novo.
+
+Se o Claude não responder (sem internet, conta desvinculada, limite no fim), o Neatly usa o Script e avisa. Nada fica pela metade.
 
 | | Script | Claude |
 |---|---|---|
 | Pastas | Por tipo de arquivo | Por assunto, com subpastas |
-| Precisa de | Nada | [Claude Code](https://claude.com/claude-code) e assinatura Pro, Max, Team ou Enterprise |
+| Precisa de | Nada | Assinatura do Claude |
+| Internet | Não | Sim |
 | Velocidade | Na hora | Alguns segundos |
-| Custo | Zero | Um pouco do seu limite (Haiku, o modelo mais leve) |
+| Custo | Zero | Um pouco do seu limite |
 
-O modo do botão fica no canto de cima. A arrumação automática tem o modo dela, em **Ajustes**: todo dia num horário e, se quiser, **Arrumar ao ligar o PC** (uns 2 minutos depois de entrar no Windows). As duas só agem se houver algo solto na pasta, sem gastar o Claude à toa, e não repetem se a pasta acabou de ser arrumada. Se o Claude não responder (sem internet, sem login, limite no fim), o Neatly usa o Script e avisa.
+O modo do botão principal fica no canto de cima. A arrumação automática tem o modo dela, em **Ajustes**. Ela só age se houver algo solto na pasta, sem gastar o Claude à toa.
 
-## Como funciona
+## O que sai do seu computador
 
-```mermaid
-flowchart LR
-    A["Botão Organizar"] --> P["Prévia"]
-    P --> M["Move e guarda no histórico"]
-    T["Agendador do Windows<br>neatly.exe --agendado"] --> M
-    P -.Claude.-> C["claude -p<br>Haiku 5.5"]
-    T -.Claude.-> C
-```
-
-- App em Flutter para Windows, com o motor (`packages/neatly_core`) em Dart puro e testado
-- O Claude só recebe nome, tamanho, data e o começo do texto. Ele devolve as pastas; quem move é o Neatly, com as mesmas travas do modo Script
-- A arrumação automática é o mesmo `neatly.exe` com `--agendado`: roda escondido, sem janela, numa tarefa só do Agendador (gatilho diário e/ou de logon), que sai junto ao desinstalar
-- Ajustes e histórico em `%LOCALAPPDATA%\Neatly`
-
-### Desenvolver
-
-```powershell
-flutter pub get
-cd packages\neatly_core; dart test; cd ..\..
-cd app; flutter run -d windows
-```
-
-`NEATLY_PASTA` e `NEATLY_DADOS` trocam a pasta organizada e a pasta de dados, para testar sem mexer na sua Downloads.
+- **Modo Script:** nada. Tudo acontece no seu PC
+- **Modo Claude:** o nome, o tamanho e a data de cada arquivo solto vão para o Claude, pela sua conta, junto com os primeiros 300 caracteres quando é texto ou documento do Office. O conteúdo inteiro, imagens, PDFs e arquivos de segredo (`.env`, `.pem`, `.key`...) nunca vão. O Claude só devolve o nome das pastas; quem move é o Neatly
+- **Atualização:** o Neatly consulta os releases deste repositório no GitHub. Não há telemetria nem servidor próprio
 
 ## Perguntas
 
@@ -95,6 +95,18 @@ cd app; flutter run -d windows
 <summary><b>Pode apagar algum arquivo meu?</b></summary>
 
 Não. Ele só move da raiz de Downloads para subpastas, nunca sobrescreve, e toda arrumação pode ser desfeita no histórico.
+</details>
+
+<details>
+<summary><b>Não tenho assinatura do Claude. Serve para mim?</b></summary>
+
+Serve. O modo Script não precisa de conta nem de internet, e a arrumação automática funciona igual.
+</details>
+
+<details>
+<summary><b>Já uso o Claude Code. Preciso fazer algo?</b></summary>
+
+Não. O Neatly acha o Claude Code instalado (instalador oficial, npm ou PATH) e usa a conta que já está nele.
 </details>
 
 <details>
@@ -118,8 +130,53 @@ Pode, ele não pede administrador. Mas vale conferir as regras de TI da empresa 
 <details>
 <summary><b>Como desinstalo?</b></summary>
 
-Em Configurações do Windows, Aplicativos, Neatly, Desinstalar. Sai o programa, a tarefa diária, os ajustes e o histórico. Seus arquivos ficam exatamente onde estão.
+Em Configurações do Windows, Aplicativos, Neatly, Desinstalar. Sai o programa, a tarefa agendada, os ajustes e o histórico. Seus arquivos ficam exatamente onde estão. O Claude Code, se foi instalado pelo Neatly, continua no PC.
 </details>
+
+<details>
+<summary><b>Achei um problema</b></summary>
+
+Abra uma [issue](https://github.com/ArturoAndreatta/neatly/issues) contando o que aconteceu. O histórico do Neatly (no app) ajuda a mostrar o que foi movido.
+</details>
+
+## Como funciona
+
+```mermaid
+flowchart LR
+    A["Botão Organizar"] --> P["Prévia"]
+    P --> M["Move e guarda no histórico"]
+    T["Agendador do Windows<br>neatly.exe --agendado"] --> M
+    P -.Claude.-> C["claude -p<br>Haiku 5.5"]
+    T -.Claude.-> C
+```
+
+- App em Flutter para Windows, com o motor (`packages/neatly_core`) em Dart puro e testado
+- O modo Claude roda `claude -p` numa pasta vazia, com saída em JSON validada por esquema. A conta é conferida com `claude auth status`
+- A arrumação automática é o mesmo `neatly.exe` com `--agendado`: roda escondido, sem janela, numa tarefa só do Agendador (gatilho diário e/ou de logon), que sai junto ao desinstalar
+- Ajustes e histórico em `%LOCALAPPDATA%\Neatly`
+
+## Desenvolver
+
+Precisa do [Flutter](https://docs.flutter.dev/get-started/install/windows/desktop) com suporte a Windows.
+
+```powershell
+flutter pub get
+cd packages\neatly_core; dart test; cd ..\..
+cd app; flutter test; flutter run -d windows
+```
+
+`NEATLY_PASTA` e `NEATLY_DADOS` trocam a pasta organizada e a pasta de dados, para testar sem mexer na sua Downloads.
+
+| Pasta | O que tem |
+|---|---|
+| `packages/neatly_core` | Varredura, regras do Script, planejador do Claude, mover e desfazer, agendamento |
+| `app` | Interface em Flutter e o modo `--agendado` |
+| `installer` | Instalador (Inno Setup) |
+| `.github/workflows` | CI em todo push; o release gera e anexa o `NeatlySetup.exe` |
+
+**Publicar versão:** igualar `version` em `app/pubspec.yaml` e `versaoNeatly` em `packages/neatly_core/lib/src/atualizacao.dart`, e criar um release com a tag `vX.Y.Z`. O workflow confere as versões, gera o instalador e anexa. Quem já tem o Neatly recebe o aviso de atualização.
+
+Sugestões e PRs são bem-vindos.
 
 ---
 
