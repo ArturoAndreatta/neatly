@@ -125,7 +125,8 @@ class _CascaState extends State<Casca> {
             Positioned(
               left: 0,
               right: 0,
-              bottom: 52,
+              // Por cima da linha da agenda, não dos botões da tela.
+              bottom: 12,
               child: AvisoGuardado(estado: e),
             ),
             Positioned.fill(
@@ -230,62 +231,67 @@ class _AvisoGuardadoState extends State<AvisoGuardado> {
         child: AnimatedOpacity(
           opacity: visivel ? 1 : 0,
           duration: visivel ? Mov.base : Mov.rapido,
-          child: Center(
-            child: MouseRegion(
-              onEnter: (_) => _tempo?.cancel(),
-              onExit: (_) => visivel ? _contar() : null,
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(16, 6, 6, 6),
-                decoration: BoxDecoration(
-                  color: c.tinta,
-                  borderRadius: BorderRadius.circular(999),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x33000000),
-                      blurRadius: 18,
-                      offset: Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      _voltaram != null
-                          ? Icons.undo_rounded
-                          : Icons.check_rounded,
-                      size: 16,
-                      color: c.menta,
-                    ),
-                    const SizedBox(width: 8),
-                    AnimatedSize(
-                      duration: Mov.rapido,
-                      curve: Mov.saida,
-                      child: Text(
-                        texto,
-                        style: TextStyle(color: c.fundo, fontSize: 13.5),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Center(
+              child: MouseRegion(
+                onEnter: (_) => _tempo?.cancel(),
+                onExit: (_) => visivel ? _contar() : null,
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(16, 6, 6, 6),
+                  decoration: BoxDecoration(
+                    color: c.tinta,
+                    borderRadius: BorderRadius.circular(999),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x33000000),
+                        blurRadius: 18,
+                        offset: Offset(0, 6),
                       ),
-                    ),
-                    const SizedBox(width: 6),
-                    if (_voltaram == null && r != null) ...[
-                      BotaoTexto(
-                        texto: 'Ver',
-                        cor: c.fundo.withValues(alpha: .75),
-                        onTap: () => widget.estado.abrirPasta(),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _voltaram != null
+                            ? Icons.undo_rounded
+                            : Icons.check_rounded,
+                        size: 16,
+                        color: c.menta,
                       ),
-                      BotaoTexto(
-                        texto: 'Desfazer',
-                        cor: c.menta,
-                        onTap: () {
-                          final v = widget.estado.desfazerRodada(r);
-                          setState(() => _voltaram = v);
-                          _tempo?.cancel();
-                          _tempo = Timer(const Duration(seconds: 3), _sumir);
-                        },
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: AnimatedSize(
+                          duration: Mov.rapido,
+                          curve: Mov.saida,
+                          child: Text(
+                            texto,
+                            style: TextStyle(color: c.fundo, fontSize: 13.5),
+                          ),
+                        ),
                       ),
-                    ] else
-                      const SizedBox(width: 10),
-                  ],
+                      const SizedBox(width: 6),
+                      if (_voltaram == null && r != null) ...[
+                        BotaoTexto(
+                          texto: 'Ver',
+                          cor: c.fundo.withValues(alpha: .75),
+                          onTap: () => widget.estado.abrirPasta(),
+                        ),
+                        BotaoTexto(
+                          texto: 'Desfazer',
+                          cor: c.menta,
+                          onTap: () {
+                            final v = widget.estado.desfazerRodada(r);
+                            setState(() => _voltaram = v);
+                            _tempo?.cancel();
+                            _tempo = Timer(const Duration(seconds: 3), _sumir);
+                          },
+                        ),
+                      ] else
+                        const SizedBox(width: 10),
+                    ],
+                  ),
                 ),
               ),
             ),
