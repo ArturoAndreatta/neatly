@@ -143,12 +143,17 @@ Abra uma [issue](https://github.com/ArturoAndreatta/neatly/issues) contando o qu
 
 ```mermaid
 flowchart LR
-    A["Botão Organizar"] --> P["Prévia"]
-    P --> M["Move e guarda no histórico"]
-    T["Agendador do Windows<br>neatly.exe --agendado"] --> M
-    P -.Claude.-> C["claude -p<br>Haiku 5.5"]
-    T -.Claude.-> C
+    O["Organizar"] --> D{"Modo"}
+    A["Agendador"] --> D
+    D -- Script --> T["Por tipo"]
+    D -- Claude --> C["Haiku 5.5"]
+    C -. falhou .-> T
+    T --> M["Move"]
+    C --> M
+    M --> H["Histórico"]
 ```
+
+Pelo botão **Organizar**, a prévia aparece antes do **Move**. O **Agendador** do Windows roda `neatly.exe --agendado` e move direto. Se o Claude falhar, vale o Script.
 
 - App em Flutter para Windows, com o motor (`packages/neatly_core`) em Dart puro e testado
 - O modo Claude roda `claude -p` numa pasta vazia, com saída em JSON validada por esquema. A conta é conferida com `claude auth status`
