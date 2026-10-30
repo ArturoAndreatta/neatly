@@ -150,6 +150,214 @@ void main() {
       },
     );
 
+    test('modo Claude planeja a estrutura antes e move pastas soltas', () async {
+      criar('EssentialsX.jar');
+      final projeto = Directory(p.join(raiz.path, 'corvo'))..createSync();
+      File(p.join(projeto.path, 'manifest.json')).writeAsStringSync('{}');
+      Directory(p.join(raiz.path, 'Imagens')).createSync();
+      Directory(p.join(raiz.path, 'Minhas coisas')).createSync();
+      Directory(p.join(raiz.path, 'Criada antes')).createSync();
+      final entradas = <String>[];
+      final claude = PlanejadorClaude(
+        executor: (args, e) async {
+          entradas.add(e);
+          if (entradas.length == 1) {
+            return jsonEncode({
+              'type': 'result',
+              'structured_output': {
+                'pastas': ['Minecraft/Plugins', 'Programação/Extensões'],
+              },
+            });
+          }
+          // 0 EssentialsX.jar, 1 corvo, 2 Minhas coisas (recebe o jar,
+          // então fica). Imagens e Criada antes nem vão.
+          return respostaClaude([
+            (0, 'Minhas coisas/Plugins'),
+            // Projeto (tem manifest.json): o Haiku tenta renomear, o nome fica.
+            (1, 'Programação/Extensões'),
+            (2, 'Arquivo/Minhas coisas'),
+          ]);
+        },
+      );
+      final rodada = Rodada(
+        id: '1',
+        quando: DateTime(2026),
+        modo: Modo.claude,
+        agendada: false,
+        raiz: raiz.path,
+        mudancas: const [],
+        pastasCriadas: [p.join(raiz.path, 'Criada antes')],
+      );
+      // Pasta acabou de ser criada: sem a janela de recentes.
+      final plano = await montarPlano(
+        raiz.path,
+        const Ajustes(minutosRecentes: 0),
+        Modo.claude,
+        claude: claude,
+        rodadas: [rodada],
+      );
+      expect(entradas.first, contains('[pasta] [projeto] "corvo" contém: '));
+      expect(entradas[1], contains('[pasta] "Minhas coisas"'));
+      expect(entradas[1], contains('Minecraft/Plugins'));
+      expect(entradas[1], isNot(contains('[pasta] "Criada antes"')));
+      expect(
+        {for (final m in plano.movimentos) m.arquivo.nome: m.destino},
+        {
+          'EssentialsX.jar': 'Minhas coisas/Plugins',
+          'corvo': 'Programação/Extensões/corvo',
+        },
+      );
+
+      final hist = Historico(dados.path);
+      final r = aplicar(plano, hist);
+      final movida = p.join(raiz.path, 'Programação', 'Extensões', 'corvo');
+      expect(File(p.join(movida, 'manifest.json')).existsSync(), isTrue);
+      expect(desfazer(r, hist), 2);
+      expect(File(p.join(projeto.path, 'manifest.json')).existsSync(), isTrue);
+      expect(Directory(p.join(raiz.path, 'Programação')).existsSync(), isFalse);
+    });
+
+    test('pasta solta vira pasta do esquema e junta com a existente', () async {
+      final velha = Directory(p.join(raiz.path, 'Plugins Minecraft'))
+        ..createSync();
+      File(p.join(velha.path, 'a.jar')).writeAsStringSync('solta');
+      File(p.join(velha.path, 'b.jar')).writeAsStringSync('b');
+      final hubs = Directory(p.join(raiz.path, 'HUBs Minecraft'))..createSync();
+      File(p.join(hubs.path, 'spawn.zip')).writeAsStringSync('s');
+      final existente = Directory(p.join(raiz.path, 'Jogos', 'Plugins'))
+        ..createSync(recursive: true);
+      File(p.join(existente.path, 'a.jar')).writeAsStringSync('antiga');
+      final claude = PlanejadorClaude(
+        executor: (args, e) async => e.startsWith('Pastas planejadas')
+            // 0 HUBs Minecraft, 1 Jogos (fica), 2 Plugins Minecraft.
+            ? respostaClaude([(0, 'Jogos/Mapas'), (2, 'Jogos/Plugins')])
+            : jsonEncode({
+                'type': 'result',
+                'structured_output': {'pastas': <String>[]},
+              }),
+      );
+      final plano = await montarPlano(
+        raiz.path,
+        const Ajustes(minutosRecentes: 0),
+        Modo.claude,
+        claude: claude,
+      );
+      final jogos = plano
+          .arvore(
+            (rel) => Directory(
+              p.joinAll([raiz.path, ...rel.split('/')]),
+            ).existsSync(),
+          )
+          .single;
+      expect(
+        jogos.filhas['Plugins']!.juntadas.single.nome,
+        'Plugins Minecraft',
+      );
+      expect(jogos.filhas['Mapas']!.nova, isTrue);
+
+      final hist = Historico(dados.path);
+      final r = aplicar(plano, hist);
+      expect(
+        File(p.join(raiz.path, 'Jogos', 'Mapas', 'spawn.zip')).existsSync(),
+        isTrue,
+      );
+      expect(
+        File(p.join(existente.path, 'a.jar')).readAsStringSync(),
+        'antiga',
+      );
+      expect(
+        File(p.join(existente.path, 'a (2).jar')).readAsStringSync(),
+        'solta',
+      );
+      expect(File(p.join(existente.path, 'b.jar')).existsSync(), isTrue);
+      expect(velha.existsSync(), isFalse);
+
+      expect(desfazer(r, hist), 3);
+      expect(File(p.join(velha.path, 'a.jar')).readAsStringSync(), 'solta');
+      expect(File(p.join(velha.path, 'b.jar')).existsSync(), isTrue);
+      expect(File(p.join(hubs.path, 'spawn.zip')).existsSync(), isTrue);
+      expect(
+        File(p.join(existente.path, 'a.jar')).readAsStringSync(),
+        'antiga',
+      );
+      expect(
+        Directory(p.join(raiz.path, 'Jogos', 'Mapas')).existsSync(),
+        isFalse,
+      );
+    });
+
+    test('reorganizar abre as pastas de organização e move unidades', () async {
+      criar('solto.jar');
+      final inst = Directory(p.join(raiz.path, 'Instaladores'))..createSync();
+      File(p.join(inst.path, 'plugin.jar')).writeAsStringSync('p');
+      File(p.join(inst.path, 'setup.exe')).writeAsStringSync('s');
+      final app = Directory(p.join(inst.path, 'App Extraido'))..createSync();
+      File(p.join(app.path, 'a.dll')).writeAsStringSync('a');
+      final repo = Directory(p.join(raiz.path, 'meu-repo'))..createSync();
+      Directory(p.join(repo.path, '.git')).createSync();
+      const destinos = {
+        'solto.jar': 'Minecraft/Plugins',
+        'plugin.jar': 'Minecraft/Plugins',
+        'setup.exe': 'Programas',
+        'App Extraido': 'Programas/App Extraido',
+        'meu-repo': 'Programação/Projetos',
+      };
+      String? classificacao;
+      final lote = <String>[];
+      final claude = PlanejadorClaude(
+        executor: (args, e) async {
+          if (e.startsWith('Pastas:')) {
+            classificacao = e;
+            return jsonEncode({
+              'type': 'result',
+              'structured_output': {
+                'organizacao': ['instaladores'],
+              },
+            });
+          }
+          if (!e.startsWith('Pastas planejadas')) {
+            return jsonEncode({
+              'type': 'result',
+              'structured_output': {'pastas': <String>[]},
+            });
+          }
+          lote.add(e);
+          final re = RegExp(r'^(\d+)\. .*?"([^"]+)"', multiLine: true);
+          return respostaClaude([
+            for (final m in re.allMatches(e))
+              (int.parse(m[1]!), destinos[m[2]!]!),
+          ]);
+        },
+      );
+      final plano = await montarReorganizacao(
+        raiz.path,
+        const Ajustes(minutosRecentes: 0),
+        claude: claude,
+      );
+      expect(classificacao, contains('"Instaladores/App Extraido"'));
+      expect(classificacao, isNot(contains('meu-repo')));
+      expect(lote.single, contains('em: Instaladores'));
+      expect(
+        {for (final m in plano.movimentos) m.arquivo.nome: m.destino},
+        {...destinos, 'meu-repo': 'Programação/Projetos/meu-repo'},
+      );
+
+      final hist = Historico(dados.path);
+      final r = aplicar(plano, hist);
+      expect(
+        File(
+          p.join(raiz.path, 'Programas', 'App Extraido', 'a.dll'),
+        ).existsSync(),
+        isTrue,
+      );
+      expect(inst.existsSync(), isFalse);
+      expect(desfazer(r, hist), 5);
+      expect(File(p.join(inst.path, 'setup.exe')).existsSync(), isTrue);
+      expect(File(p.join(app.path, 'a.dll')).existsSync(), isTrue);
+      expect(Directory(p.join(repo.path, '.git')).existsSync(), isTrue);
+      expect(Directory(p.join(raiz.path, 'Programas')).existsSync(), isFalse);
+    });
+
     test('Claude falhando cai no Script com aviso', () async {
       criar('foto.jpg');
       final claude = PlanejadorClaude(

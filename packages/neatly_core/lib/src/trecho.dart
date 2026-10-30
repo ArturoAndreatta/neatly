@@ -25,6 +25,7 @@ const _limiteOffice = 30 * 1024 * 1024;
 /// Começo do conteúdo legível de [a], para o Claude entender o assunto.
 /// Arquivo binário, grande ou ilegível devolve null.
 String? trecho(ArquivoSolto a, {int caracteres = 300}) {
+  if (a.pasta) return null;
   try {
     String? bruto;
     if (_texto.contains(a.extensao)) {

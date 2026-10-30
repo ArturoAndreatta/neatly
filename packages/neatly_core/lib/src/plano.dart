@@ -7,8 +7,13 @@ class Movimento {
 
   final ArquivoSolto arquivo;
 
-  /// Ex.: `Faculdade/Cálculo II`.
+  /// Ex.: `Faculdade/Cálculo II`. Para pasta inteira é o caminho final da
+  /// própria pasta, já com o nome novo (`Minecraft/Plugins`).
   final String destino;
+
+  /// Pasta que muda de nome: vira [destino] (ou junta o conteúdo nele, se
+  /// já existir) em vez de entrar nele.
+  bool get renomeia => arquivo.pasta && destino.split('/').last != arquivo.nome;
 }
 
 /// Pasta da prévia, com subpastas e arquivos.
@@ -22,8 +27,13 @@ class NoPasta {
   final Map<String, NoPasta> filhas = {};
   final List<ArquivoSolto> arquivos = [];
 
+  /// Pastas soltas que viram esta (ou juntam o conteúdo nela).
+  final List<ArquivoSolto> juntadas = [];
+
   int get total =>
-      arquivos.length + filhas.values.fold(0, (s, f) => s + f.total);
+      arquivos.length +
+      juntadas.length +
+      filhas.values.fold(0, (s, f) => s + f.total);
 }
 
 /// O que uma rodada vai fazer, antes de mexer em qualquer coisa.
@@ -33,6 +43,7 @@ class Plano {
     required this.modo,
     required this.movimentos,
     this.aviso,
+    this.limpar = const [],
   });
 
   final String raiz;
@@ -44,6 +55,10 @@ class Plano {
   /// Algo que o usuário precisa saber (ex.: Claude indisponível).
   final String? aviso;
 
+  /// Pastas de organização esvaziadas pela reorganização: saem se ficarem
+  /// vazias depois de mover.
+  final List<String> limpar;
+
   bool get vazio => movimentos.isEmpty;
 
   /// Árvore para a prévia; [existe] diz se a pasta relativa já existe.
@@ -51,6 +66,8 @@ class Plano {
     final raizes = <String, NoPasta>{};
     for (final m in movimentos) {
       final partes = m.destino.split('/');
+      // Pasta que mantém o nome aparece dentro da pasta mãe, como arquivo.
+      if (m.arquivo.pasta && !m.renomeia) partes.removeLast();
       var nivel = raizes;
       NoPasta? atual;
       var rel = '';
@@ -63,7 +80,7 @@ class Plano {
         );
         nivel = atual.filhas;
       }
-      atual!.arquivos.add(m.arquivo);
+      (m.renomeia ? atual!.juntadas : atual!.arquivos).add(m.arquivo);
     }
     final lista = raizes.values.toList()
       ..sort((a, b) => b.total.compareTo(a.total));

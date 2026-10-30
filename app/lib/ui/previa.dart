@@ -25,6 +25,10 @@ class Previa extends StatelessWidget {
           Directory(p.joinAll([plano.raiz, ...rel.split('/')])).existsSync(),
     );
     final n = plano.movimentos.length;
+    // Com pasta inteira no meio, "arquivos" deixa de ser verdade.
+    final itens = plano.movimentos.any((m) => m.arquivo.pasta)
+        ? (n == 1 ? 'item' : 'itens')
+        : (n == 1 ? 'arquivo' : 'arquivos');
     final pastas = arvore.length;
     final novas = arvore.where((n) => n.nova).length;
 
@@ -50,7 +54,7 @@ class Previa extends StatelessWidget {
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
-                  '$n ${n == 1 ? 'arquivo' : 'arquivos'} em $pastas '
+                  '$n $itens em $pastas '
                   '${pastas == 1 ? 'pasta' : 'pastas'}'
                   '${novas == 0
                       ? ''
@@ -123,10 +127,7 @@ class Previa extends StatelessWidget {
             children: [
               BotaoTexto(texto: 'Voltar', onTap: estado.cancelar),
               const SizedBox(width: 8),
-              BotaoPrincipal(
-                texto: 'Mover $n ${n == 1 ? 'arquivo' : 'arquivos'}',
-                onTap: estado.mover,
-              ),
+              BotaoPrincipal(texto: 'Mover $n $itens', onTap: estado.mover),
             ],
           ),
         ],
@@ -156,8 +157,14 @@ class _PastaState extends State<_Pasta> {
     final recuo = 14.0 + widget.nivel * 20;
     final filhas = no.filhas.values.toList()
       ..sort((a, b) => b.total.compareTo(a.total));
-    final arquivos = [...no.arquivos]
-      ..sort((a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()));
+    // Pastas que viram esta vêm primeiro, como "conteúdo de X".
+    final arquivos = [
+      for (final a in no.juntadas) (a, 'conteúdo de ${a.nome}'),
+      for (final a in [
+        ...no.arquivos,
+      ]..sort((a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase())))
+        (a, a.nome),
+    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -250,14 +257,16 @@ class _PastaState extends State<_Pasta> {
                           child: Row(
                             children: [
                               Icon(
-                                Icons.insert_drive_file_outlined,
+                                arquivos[i].$1.pasta
+                                    ? Icons.folder_outlined
+                                    : Icons.insert_drive_file_outlined,
                                 size: 15,
                                 color: c.fraca,
                               ),
                               const SizedBox(width: 9),
                               Expanded(
                                 child: Text(
-                                  arquivos[i].nome,
+                                  arquivos[i].$2,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontSize: 13,

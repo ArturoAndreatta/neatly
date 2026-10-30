@@ -10,8 +10,14 @@ Future<int> rodarAgendado() async {
   final ajustes = migrarV1(dados) ?? Ajustes.carregar(dados);
   final pasta = ajustes.pasta ?? pastaDownloads();
   if (!Directory(pasta).existsSync()) return 1;
-  final plano = await montarPlano(pasta, ajustes, ajustes.agendamento.modo);
+  final historico = Historico(dados);
+  final plano = await montarPlano(
+    pasta,
+    ajustes,
+    ajustes.agendamento.modo,
+    rodadas: historico.carregar(),
+  );
   if (plano.vazio && plano.aviso == null) return 0;
-  final r = aplicar(plano, Historico(dados), agendada: true);
+  final r = aplicar(plano, historico, agendada: true);
   return r.falhas > 0 ? 1 : 0;
 }

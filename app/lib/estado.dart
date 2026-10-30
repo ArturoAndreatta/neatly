@@ -49,6 +49,9 @@ class Estado extends ChangeNotifier {
   Plano? plano;
   List<Rodada> rodadas = [];
 
+  /// Por que uma reorganização não trouxe nada (ex.: Claude fora do ar).
+  String? aviso;
+
   /// Última rodada desta sessão (para o aviso com Desfazer).
   Rodada? ultima;
   Atualizacao? atualizacao;
@@ -104,12 +107,19 @@ class Estado extends ChangeNotifier {
     return ok;
   }
 
-  Future<void> organizar() async {
+  /// Rodada atual é a reorganização da pasta toda.
+  bool reorganizando = false;
+
+  Future<void> organizar({bool tudo = false}) async {
     final g = ++_geracao;
     fase = Fase.planejando;
+    reorganizando = tudo;
+    aviso = null;
     notifyListeners();
     final inicio = DateTime.now();
-    final novo = await montarPlano(pasta, ajustes, ajustes.modo);
+    final novo = tudo
+        ? await montarReorganizacao(pasta, ajustes)
+        : await montarPlano(pasta, ajustes, ajustes.modo, rodadas: rodadas);
     // O Script responde na hora; um respiro curto evita a tela piscar.
     final faltam =
         const Duration(milliseconds: 450) - DateTime.now().difference(inicio);
@@ -117,6 +127,8 @@ class Estado extends ChangeNotifier {
     if (g != _geracao) return;
     if (novo.vazio) {
       fase = Fase.inicio;
+      reorganizando = false;
+      aviso = novo.aviso;
       olhar();
     } else {
       plano = novo;
@@ -128,6 +140,7 @@ class Estado extends ChangeNotifier {
   void cancelar() {
     _geracao++;
     fase = Fase.inicio;
+    reorganizando = false;
     plano = null;
     olhar();
     notifyListeners();
@@ -145,6 +158,7 @@ class Estado extends ChangeNotifier {
     rodadas = historico.carregar();
     plano = null;
     fase = Fase.inicio;
+    reorganizando = false;
     varredura = const Varredura(soltos: [], recentes: 0);
     olhar();
     notifyListeners();

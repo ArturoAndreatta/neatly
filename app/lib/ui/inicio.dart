@@ -107,6 +107,39 @@ class _InicioState extends State<Inicio> {
                   ),
           ),
         ),
+        const SizedBox(height: 4),
+        SizedBox(
+          height: 40,
+          child: AnimatedSwitcher(
+            duration: Mov.base,
+            switchInCurve: Mov.saida,
+            transitionBuilder: _subirEsmaecer,
+            child: e.aviso != null && !pensando
+                ? Padding(
+                    key: const ValueKey('aviso'),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Text(
+                      e.aviso!,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: Cores.de(context).aviso,
+                      ),
+                    ),
+                  )
+                : pensando ||
+                      movendo ||
+                      e.ajustes.modo != Modo.claude ||
+                      !e.claudeInstalado
+                ? const SizedBox.shrink(key: ValueKey('nada'))
+                : BotaoTexto(
+                    key: const ValueKey('tudo'),
+                    texto: 'Reorganizar tudo',
+                    icone: Icons.auto_awesome_rounded,
+                    onTap: () => e.organizar(tudo: true),
+                  ),
+          ),
+        ),
         const Spacer(flex: 2),
         _LinhaAgenda(estado: e, onTap: widget.abrirAgenda),
         const SizedBox(height: 18),
@@ -218,10 +251,15 @@ class _Pensando extends StatelessWidget {
     final c = Cores.de(context);
     final n = estado.varredura.soltos.length;
     final claude = estado.ajustes.modo == Modo.claude;
+    final tudo = estado.reorganizando;
     return Column(
       children: [
         Text(
-          claude ? 'Lendo os arquivos' : 'Separando por tipo',
+          tudo
+              ? 'Repensando a pasta'
+              : claude
+              ? 'Lendo os arquivos'
+              : 'Separando por tipo',
           style: TextStyle(
             fontFamily: fonteDisplay,
             fontSize: 30,
@@ -233,7 +271,10 @@ class _Pensando extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          claude
+          tudo
+              ? 'O Claude está olhando tudo em ${estado.nomePasta}, '
+                    'pastas inclusive. Pode levar alguns minutos…'
+              : claude
               ? 'O Claude está decidindo as pastas de $n ${n == 1 ? 'arquivo' : 'arquivos'}…'
               : 'Montando a prévia…',
           style: TextStyle(fontSize: 14.5, color: c.suave),
