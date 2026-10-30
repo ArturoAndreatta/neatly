@@ -25,7 +25,7 @@ class ConteudoAjustes extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = Cores.de(context);
     final a = estado.ajustes.agendamento;
-    final claude = estado.claudeInstalado;
+    final claude = estado.claudePronto;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 6, 20, 20),
@@ -138,7 +138,7 @@ class ConteudoAjustes extends StatelessWidget {
                       ),
                       if (a.modo == Modo.claude && !claude)
                         _Nota(
-                          'Sem o Claude Code instalado, a arrumação automática usa o Script.',
+                          'Sem a conta do Claude vinculada, a arrumação automática usa o Script.',
                           cor: c.aviso,
                         ),
                     ],
@@ -159,19 +159,7 @@ class ConteudoAjustes extends StatelessWidget {
         ),
         const SizedBox(height: 22),
         _Titulo('Claude'),
-        _Linha(
-          texto: claude
-              ? 'Claude Code encontrado'
-              : 'Claude Code não encontrado',
-          detalhe: claude
-              ? 'Usa a sua assinatura, com o Haiku 5.5.'
-              : 'Instale pelo site claude.com/claude-code e entre com sua conta.',
-          inicio: Icon(
-            claude ? Icons.check_circle_rounded : Icons.error_outline_rounded,
-            size: 18,
-            color: claude ? c.mentaTinta : c.aviso,
-          ),
-        ),
+        _ContaClaude(estado: estado),
         _Nota(
           'Senhas, chaves e .env nunca saem do lugar nem são enviados ao Claude.',
         ),
@@ -196,6 +184,103 @@ class ConteudoAjustes extends StatelessWidget {
                 ),
         ),
       ],
+    );
+  }
+}
+
+/// Situação do Claude Code e da conta, com o botão para vincular.
+class _ContaClaude extends StatelessWidget {
+  const _ContaClaude({required this.estado});
+
+  final Estado estado;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Cores.de(context);
+    final conta = estado.conta;
+    final situacao =
+        conta?.situacao ??
+        (estado.claudeInstalado
+            ? SituacaoClaude.conectado
+            : SituacaoClaude.ausente);
+    final esperando = estado.vinculando && situacao != SituacaoClaude.conectado;
+
+    final (texto, detalhe) = switch (situacao) {
+      SituacaoClaude.conectado => (
+        'Conta do Claude vinculada',
+        conta?.email == null
+            ? 'Usa a sua assinatura, com o Haiku 5.5.'
+            : '${conta!.email} · Haiku 5.5',
+      ),
+      SituacaoClaude.semConta => (
+        'Nenhuma conta do Claude vinculada',
+        esperando
+            ? 'Termine o login no navegador. Aqui atualiza sozinho.'
+            : 'Entre com uma conta Pro, Max, Team ou Enterprise.',
+      ),
+      SituacaoClaude.ausente => (
+        'Claude Code não instalado',
+        esperando
+            ? 'Siga a janela que abriu. Depois é só entrar com a conta.'
+            : 'O modo Claude usa o Claude Code. A instalação leva um minuto.',
+      ),
+    };
+
+    final Widget fim = esperando
+        ? Row(
+            key: const ValueKey('esperando'),
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox.square(
+                dimension: 14,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: c.menta,
+                ),
+              ),
+              BotaoTexto(texto: 'Parar', onTap: estado.pararVinculo),
+            ],
+          )
+        : switch (situacao) {
+            SituacaoClaude.conectado => const SizedBox.shrink(
+              key: ValueKey('ok'),
+            ),
+            SituacaoClaude.semConta => BotaoTexto(
+              key: const ValueKey('vincular'),
+              texto: 'Vincular conta',
+              cor: c.mentaTinta,
+              onTap: estado.vincularClaude,
+            ),
+            SituacaoClaude.ausente => BotaoTexto(
+              key: const ValueKey('instalar'),
+              texto: 'Instalar',
+              cor: c.mentaTinta,
+              onTap: estado.vincularClaude,
+            ),
+          };
+
+    final ok = situacao == SituacaoClaude.conectado;
+    return _Linha(
+      texto: texto,
+      detalhe: detalhe,
+      inicio: AnimatedSwitcher(
+        duration: Mov.rapido,
+        transitionBuilder: (w, a) => ScaleTransition(
+          scale: Tween(begin: .6, end: 1.0).animate(a),
+          child: FadeTransition(opacity: a, child: w),
+        ),
+        child: Icon(
+          ok ? Icons.check_circle_rounded : Icons.error_outline_rounded,
+          key: ValueKey(ok),
+          size: 18,
+          color: ok ? c.mentaTinta : c.aviso,
+        ),
+      ),
+      fim: AnimatedSwitcher(
+        duration: Mov.rapido,
+        transitionBuilder: (w, a) => FadeTransition(opacity: a, child: w),
+        child: fim,
+      ),
     );
   }
 }

@@ -159,7 +159,7 @@ class _InicioState extends State<Inicio> {
                 : pensando ||
                       movendo ||
                       e.ajustes.modo != Modo.claude ||
-                      !e.claudeInstalado
+                      !e.claudePronto
                 ? const SizedBox.shrink(key: ValueKey('nada'))
                 : BotaoTexto(
                     key: const ValueKey('tudo'),

@@ -67,7 +67,7 @@ class Barra extends StatelessWidget {
           ],
           SeletorModo(
             modo: estado.ajustes.modo,
-            claudeInstalado: estado.claudeInstalado,
+            avisoClaude: estado.faltaClaude,
             aoEscolher: estado.trocarModo,
           ),
           const SizedBox(width: 4),
@@ -185,12 +185,12 @@ class SeletorModo extends StatefulWidget {
     super.key,
     required this.modo,
     required this.aoEscolher,
-    this.claudeInstalado = true,
+    this.avisoClaude,
   });
 
   final Modo modo;
   final ValueChanged<Modo> aoEscolher;
-  final bool claudeInstalado;
+  final String? avisoClaude;
 
   @override
   State<SeletorModo> createState() => _SeletorModoState();
@@ -272,7 +272,7 @@ class _SeletorModoState extends State<SeletorModo>
                 animacao: _abrir,
                 origem: origem,
                 modo: widget.modo,
-                claudeInstalado: widget.claudeInstalado,
+                avisoClaude: widget.avisoClaude,
                 aoEscolher: (m) {
                   widget.aoEscolher(m);
                   _fechar();
@@ -351,14 +351,14 @@ class _Menu extends StatelessWidget {
     required this.origem,
     required this.modo,
     required this.aoEscolher,
-    required this.claudeInstalado,
+    required this.avisoClaude,
   });
 
   final Animation<double> animacao;
   final Alignment origem;
   final Modo modo;
   final ValueChanged<Modo> aoEscolher;
-  final bool claudeInstalado;
+  final String? avisoClaude;
 
   @override
   Widget build(BuildContext context) {
@@ -431,12 +431,13 @@ class _Menu extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 1),
                                 Text(
-                                  m == Modo.claude && !claudeInstalado
-                                      ? 'Precisa do Claude Code instalado'
+                                  m == Modo.claude && avisoClaude != null
+                                      ? avisoClaude!
                                       : descricaoModo(m),
                                   style: TextStyle(
                                     fontSize: 12.5,
-                                    color: m == Modo.claude && !claudeInstalado
+                                    color:
+                                        m == Modo.claude && avisoClaude != null
                                         ? c.aviso
                                         : c.suave,
                                   ),

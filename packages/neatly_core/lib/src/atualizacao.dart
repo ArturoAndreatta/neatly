@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 /// Versão deste build (igual à do pubspec do app e à tag do release).
-const versaoNeatly = '2.0.0';
+const versaoNeatly = '2.1.0';
 
 const _repo = 'ArturoAndreatta/neatly';
 const _instalador = 'NeatlySetup.exe';

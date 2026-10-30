@@ -37,4 +37,5 @@ Future<void> main(List<String> args) async {
 
   runApp(NeatlyApp(estado: estado));
   estado.procurarAtualizacao();
+  estado.verificarClaude();
 }

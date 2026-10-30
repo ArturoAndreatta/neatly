@@ -106,10 +106,16 @@ class _CascaState extends State<Casca> {
   _Painel _painel = _Painel.nenhum;
   _Painel _ultimoPainel = _Painel.historico;
 
-  void _abrir(_Painel p) => setState(() {
-    _painel = p;
-    _ultimoPainel = p;
-  });
+  void _abrir(_Painel p) {
+    // A conta pode ter mudado fora do app (login ou logout no terminal).
+    if (p == _Painel.ajustes && widget.estado.conta != null) {
+      widget.estado.verificarClaude();
+    }
+    setState(() {
+      _painel = p;
+      _ultimoPainel = p;
+    });
+  }
 
   void _fechar() => setState(() => _painel = _Painel.nenhum);
 

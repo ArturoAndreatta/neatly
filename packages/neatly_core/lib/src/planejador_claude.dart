@@ -255,10 +255,10 @@ Future<String> _executarClaude(List<String> argumentos, String entrada) async {
   }
 }
 
-String _mensagemErro(String stderr) {
-  final s = stderr.toLowerCase();
+String _mensagemErro(String saida) {
+  final s = saida.toLowerCase();
   if (s.contains('login') || s.contains('auth') || s.contains('401')) {
-    return 'Entre no Claude Code (rode "claude" uma vez) para usar o modo Claude.';
+    return 'Vincule sua conta do Claude em Ajustes para usar o modo Claude.';
   }
   if (s.contains('limit') || s.contains('429')) {
     return 'Seu limite do Claude acabou por agora.';

@@ -156,6 +156,14 @@ final _cenarios = <String, (_Preparo, Future<void> Function(WidgetTester)?)>{
     (t) => t.tap(find.bySemanticsLabel('Histórico')),
   ),
   'ajustes': ((e, d) {}, (t) => t.tap(find.bySemanticsLabel('Ajustes'))),
+  'ajustes-sem-conta': (
+    (e, d) => e.conta = const ContaClaude(SituacaoClaude.semConta),
+    (t) => t.tap(find.bySemanticsLabel('Ajustes')),
+  ),
+  'ajustes-sem-claude': (
+    (e, d) => e.conta = const ContaClaude(SituacaoClaude.ausente),
+    (t) => t.tap(find.bySemanticsLabel('Ajustes')),
+  ),
   'atualizacao-guardado': (
     (e, d) {
       e.atualizacao = const Atualizacao('2.10.0', '');
@@ -191,6 +199,8 @@ void main() {
             ..createSync();
           final dados = Directory(p.join(base.path, 'dados'))..createSync();
           late Estado e;
+          consultarContaClaude = () async =>
+              e.conta ?? const ContaClaude(SituacaoClaude.conectado);
           await t.runAsync(() async {
             e = Estado(dados: dados.path, downloads: downloads.path);
             e.ajustes = e.ajustes.copyWith(modo: Modo.claude);

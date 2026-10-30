@@ -4,6 +4,7 @@ library;
 
 export 'src/ajustes.dart';
 export 'src/arquivo.dart';
+export 'src/conta_claude.dart';
 export 'src/atualizacao.dart';
 export 'src/historico.dart';
 export 'src/migracao.dart';

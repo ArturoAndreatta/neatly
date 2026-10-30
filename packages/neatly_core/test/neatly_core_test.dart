@@ -414,6 +414,43 @@ void main() {
       );
       expect(() => lerResposta('lixo'), throwsA(isA<ErroClaude>()));
     });
+
+    test('sem login avisa para vincular a conta', () {
+      expect(
+        () => lerResposta(
+          jsonEncode({
+            'type': 'result',
+            'is_error': true,
+            'result': 'Not logged in · Please run /login',
+          }),
+        ),
+        throwsA(
+          isA<ErroClaude>().having(
+            (e) => e.mensagem,
+            'mensagem',
+            contains('Vincule'),
+          ),
+        ),
+      );
+    });
+
+    test('lê a conta do claude auth status', () {
+      final conta = lerStatusClaude(
+        jsonEncode({'loggedIn': true, 'email': 'a@b.com'}),
+      );
+      expect(conta.situacao, SituacaoClaude.conectado);
+      expect(conta.email, 'a@b.com');
+      expect(conta.falta, isNull);
+      expect(
+        lerStatusClaude(jsonEncode({'loggedIn': false})).situacao,
+        SituacaoClaude.semConta,
+      );
+      expect(lerStatusClaude('').situacao, SituacaoClaude.semConta);
+      expect(
+        const ContaClaude(SituacaoClaude.ausente).falta,
+        contains('instalado'),
+      );
+    });
   });
 
   group('arrumação automática', () {

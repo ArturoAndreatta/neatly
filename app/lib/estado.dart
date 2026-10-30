@@ -62,6 +62,60 @@ class Estado extends ChangeNotifier {
   String get nomePasta => p.basename(pasta);
   bool get claudeInstalado => acharClaude() != null;
 
+  /// Claude Code e conta vinculada; null até a primeira consulta voltar.
+  ContaClaude? conta;
+  Timer? _esperaConta;
+
+  /// Dá para usar o modo Claude. Antes da consulta, basta estar instalado.
+  bool get claudePronto => conta?.pronta ?? claudeInstalado;
+
+  /// O que falta para o modo Claude; null quando já dá.
+  String? get faltaClaude => claudePronto
+      ? null
+      : (conta ?? const ContaClaude(SituacaoClaude.ausente)).falta;
+
+  /// Esperando a pessoa terminar o login (ou a instalação) na outra janela.
+  bool get vinculando => _esperaConta?.isActive ?? false;
+
+  Future<void> verificarClaude() async {
+    final nova = await consultarContaClaude();
+    final mudou =
+        nova.situacao != conta?.situacao || nova.email != conta?.email;
+    conta = nova;
+    if (nova.pronta && vinculando) {
+      _esperaConta?.cancel();
+      if (aviso != null && ajustes.modo == Modo.claude) aviso = null;
+    } else if (!mudou) {
+      return;
+    }
+    notifyListeners();
+  }
+
+  /// Abre o login do Claude Code (ou o instalador, se faltar) numa janela
+  /// à parte e confere a conta a cada 3 segundos, por até 10 minutos.
+  Future<void> vincularClaude() async {
+    if (claudeInstalado) {
+      await abrirLoginClaude();
+    } else {
+      await abrirInstalacaoClaude();
+    }
+    _esperaConta?.cancel();
+    var vezes = 0;
+    _esperaConta = Timer.periodic(const Duration(seconds: 3), (t) {
+      if (++vezes >= 200) {
+        t.cancel();
+        notifyListeners();
+      }
+      unawaited(verificarClaude());
+    });
+    notifyListeners();
+  }
+
+  void pararVinculo() {
+    _esperaConta?.cancel();
+    notifyListeners();
+  }
+
   void olhar() {
     if (fase != Fase.inicio) return;
     final v = varrer(pasta, ajustes);
@@ -209,6 +263,8 @@ class Estado extends ChangeNotifier {
       fase = Fase.inicio;
       reorganizando = false;
       aviso = novo.aviso;
+      // Talvez a conta tenha saído: atualiza o que Ajustes mostra.
+      if (aviso != null && conta != null) unawaited(verificarClaude());
       olhar();
     } else {
       plano = novo;
@@ -298,6 +354,7 @@ class Estado extends ChangeNotifier {
   @override
   void dispose() {
     _vigia.cancel();
+    _esperaConta?.cancel();
     super.dispose();
   }
 }
@@ -306,3 +363,7 @@ class Estado extends ChangeNotifier {
 @visibleForTesting
 Future<Atualizacao?> Function() procurarAtualizacaoNoGitHub =
     procurarAtualizacao;
+
+/// Atalho para os testes trocarem a consulta da conta.
+@visibleForTesting
+Future<ContaClaude> Function() consultarContaClaude = verificarContaClaude;
