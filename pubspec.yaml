@@ -1,0 +1,12 @@
+name: neatly_workspace
+publish_to: none
+
+environment:
+  sdk: ^3.10.0
+
+workspace:
+  - packages/neatly_core
+  - app
+
+dev_dependencies:
+  lints: ^6.0.0

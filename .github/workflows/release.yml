@@ -8,18 +8,42 @@ permissions:
   contents: write
 
 jobs:
-  zip:
-    name: Anexar Neatly.zip
-    runs-on: ubuntu-latest
+  instalador:
+    name: Anexar NeatlySetup.exe
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.release.tag_name }}
 
-      - name: Montar o zip
-        run: git archive HEAD --prefix=Neatly/ instalar.cmd desinstalar.cmd src LICENSE README.md -o Neatly.zip
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.38.5
+          cache: true
+
+      - name: Conferir versão
+        shell: pwsh
+        run: |
+          $tag = '${{ github.event.release.tag_name }}'.TrimStart('v')
+          $app = (Select-String -Path app/pubspec.yaml -Pattern '^version:\s*([\d.]+)').Matches[0].Groups[1].Value
+          $core = (Select-String -Path packages/neatly_core/lib/src/atualizacao.dart -Pattern "versaoNeatly = '([\d.]+)'").Matches[0].Groups[1].Value
+          if ($tag -ne $app -or $tag -ne $core) { throw "Tag $tag, pubspec $app, versaoNeatly $core: precisam ser iguais" }
+
+      - name: Build
+        working-directory: app
+        run: |
+          flutter pub get
+          flutter build windows --release
+
+      - name: Instalador
+        shell: pwsh
+        run: |
+          $tag = '${{ github.event.release.tag_name }}'.TrimStart('v')
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DVersao=$tag" installer\neatly.iss
+          if ($LASTEXITCODE -ne 0) { exit 1 }
 
       - name: Anexar ao release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" Neatly.zip --clobber
+        run: gh release upload "${{ github.event.release.tag_name }}" installer/saida/NeatlySetup.exe --clobber

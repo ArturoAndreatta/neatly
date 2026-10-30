@@ -2,41 +2,47 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, v2]
   pull_request:
   workflow_dispatch:
 
 jobs:
   testes:
-    name: Testes no Windows
+    name: Testes e build no Windows
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v5
 
-      - name: Instalar Pester e PSScriptAnalyzer
-        shell: powershell
-        run: |
-          Set-PSRepository PSGallery -InstallationPolicy Trusted
-          Install-Module Pester -MinimumVersion 5.5 -Force -SkipPublisherCheck -Scope CurrentUser
-          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.38.5
+          cache: true
 
-      - name: Analisar os scripts
-        shell: powershell
-        run: |
-          $erros = @('./src', './instalar-web.ps1', './tests') | ForEach-Object { Invoke-ScriptAnalyzer -Path $_ -Recurse -Severity Error }
-          $erros | Format-Table -AutoSize
-          if ($erros) { exit 1 }
+      - name: Dependências
+        run: flutter pub get
 
-      - name: Testes (Windows PowerShell 5.1, o que o usuario tem)
-        shell: powershell
+      - name: Analisar
         run: |
-          Import-Module Pester -MinimumVersion 5.5
-          $r = Invoke-Pester ./tests -Output Detailed -PassThru
-          if ($r.FailedCount -gt 0) { exit 1 }
+          dart format --output=none --set-exit-if-changed packages app/lib
+          flutter analyze
 
-      - name: Testes (PowerShell 7)
+      - name: Testes do motor
+        working-directory: packages/neatly_core
+        run: dart test
+
+      - name: Build do app
+        working-directory: app
+        run: flutter build windows --release
+
+      - name: Instalador
         shell: pwsh
         run: |
-          Import-Module Pester -MinimumVersion 5.5
-          $r = Invoke-Pester ./tests -Output Detailed -PassThru
-          if ($r.FailedCount -gt 0) { exit 1 }
+          $versao = (Select-String -Path app/pubspec.yaml -Pattern '^version:\s*([\d.]+)').Matches[0].Groups[1].Value
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DVersao=$versao" installer\neatly.iss
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NeatlySetup
+          path: installer/saida/NeatlySetup.exe

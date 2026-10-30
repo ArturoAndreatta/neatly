@@ -11,9 +11,11 @@
 ![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?logo=windows&logoColor=white)
 [![Licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-lightgrey)](LICENSE)
 
-<img src="docs/painel.gif" width="760" alt="Painel do Neatly organizando a pasta Downloads">
+<img src="docs/inicio.jpg" width="300" alt="Tela principal do Neatly com 14 arquivos soltos e o botão Organizar">
+&nbsp;&nbsp;
+<img src="docs/previa.jpg" width="300" alt="Prévia com as pastas que o Claude escolheu">
 
-[**Baixar**](https://github.com/ArturoAndreatta/neatly/releases/latest/download/Neatly.zip) · [Como funciona](#como-funciona) · [Perguntas](#perguntas)
+[**Baixar**](https://github.com/ArturoAndreatta/neatly/releases/latest/download/NeatlySetup.exe) · [Como funciona](#como-funciona) · [Perguntas](#perguntas)
 
 </div>
 
@@ -21,121 +23,96 @@
 
 ## O que ele faz
 
-Todo dia, no horário que você escolher, o Neatly pega os arquivos soltos na pasta Downloads e guarda cada um na sua gaveta: `Imagens`, `Documentos`, `Instaladores`, `Vídeos`, `Áudio`, `Compactados`...
+O Neatly pega os arquivos soltos na pasta Downloads e guarda cada um numa pasta. Você escolhe como:
 
-- **Não perde rodada.** PC desligado no horário? Ele organiza assim que você ligar
-- **Nunca apaga nada.** Só move, nunca sobrescreve, não mexe em subpastas nem em arquivo que ainda está baixando
-- **Desfaz qualquer rodada** com um clique
-- **Acha qualquer arquivo:** digite parte do nome e ele mostra pra onde foi
-- **Deixa segredo em paz:** `.env`, `.pem`, `.key` e afins ficam onde estão
-- **Se atualiza sozinho:** quando sai versão nova, aparece o aviso no painel
-- **Claude opcional:** funciona com regras fixas, sem IA. Se você tem o Claude Code, o Claude Haiku pode fazer o serviço
+- **Claude:** o Claude Haiku 5.5 lê o nome e o começo de cada arquivo e cria pastas por assunto, com subpastas quando faz sentido: `Faculdade/Cálculo II`, `Finanças/Boletos`, `Viagens/Florianópolis`. Ele reaproveita as pastas que você já tem.
+- **Script:** separa por tipo, na hora e sem internet: `Imagens`, `Documentos`, `Vídeos`, `Instaladores`... Também reconhece capturas de tela, arquivos do WhatsApp, boletos e notas fiscais.
+
+Antes de mover qualquer coisa, aparece uma **prévia** com a árvore de pastas. Um clique e pronto.
+
+- **Arruma sozinho todo dia** no horário que você escolher. PC desligado na hora? Arruma assim que ligar
+- **Nunca apaga nada.** Só move, nunca sobrescreve (nome repetido vira `nome (2).ext`) e não mexe em subpastas nem em arquivo que ainda está baixando
+- **Desfaz qualquer arrumação**, apagando as pastas que ela criou
+- **Acha qualquer arquivo guardado:** digite parte do nome no histórico
+- **Deixa segredo em paz:** `.env`, `.pem`, `.key` e afins ficam onde estão e nunca são enviados ao Claude
+- **Se atualiza sozinho** quando sai versão nova
 
 ## Instalar
 
-1. **[Baixe o Neatly.zip](https://github.com/ArturoAndreatta/neatly/releases/latest/download/Neatly.zip)** e extraia em qualquer lugar
-2. Dê dois cliques em **`instalar.cmd`**
-3. Pronto. O painel abre no navegador
+1. **[Baixe o NeatlySetup.exe](https://github.com/ArturoAndreatta/neatly/releases/latest/download/NeatlySetup.exe)**
+2. Abra e clique em **Instalar**
 
-Não precisa ser administrador. Ou, se preferir, uma linha no PowerShell:
+Não precisa ser administrador. Quem usava o Neatly 1 (o painel no navegador) recebe o novo pelo botão Atualizar de sempre: modo e horário vêm junto.
 
-```powershell
-irm https://raw.githubusercontent.com/ArturoAndreatta/neatly/main/instalar-web.ps1 | iex
-```
+> O Windows pode mostrar o aviso do SmartScreen na primeira vez, como faz com qualquer programa novo. Clique em **Mais informações** e **Executar assim mesmo**. O código inteiro está aqui.
 
-> O Windows pode mostrar um aviso de segurança na primeira vez, como faz com qualquer script baixado. Clique em **Executar**. O código inteiro está aqui pra quem quiser conferir.
+## Claude ou Script
 
-## Usar
-
-Depois de instalado, não precisa fazer nada. Quando quiser ver o que aconteceu, abra o atalho **Neatly**.
-
-O painel mostra só o que importa: quantos arquivos estão soltos, quando é a próxima arrumação e o que foi feito em cada rodada. Horário, modo e pastas ficam em **Ajustes**, no canto.
-
-## Claude ou só script
-
-| | Só script | Claude |
+| | Script | Claude |
 |---|---|---|
+| Pastas | Por tipo de arquivo | Por assunto, com subpastas |
 | Precisa de | Nada | [Claude Code](https://claude.com/claude-code) e assinatura Pro, Max, Team ou Enterprise |
-| Velocidade | Instantâneo | Alguns segundos |
+| Velocidade | Na hora | Alguns segundos |
 | Custo | Zero | Um pouco do seu limite (Haiku, o modelo mais leve) |
 
-No modo Claude, o Neatly mede quanto do seu limite de 5h e semanal cada rodada gastou e mostra a média por semana em **Ver números**.
-
-Para rodar sozinho, o Claude precisa de um token de 1 ano (o jeito oficial, gerado pelo próprio Claude Code). O instalador oferece configurar na hora. O token fica criptografado com a proteção do Windows: só o seu usuário consegue ler.
-
-## Personalizar
-
-Em **Ajustes → Abrir pasta de dados**, edite o `config.json`:
-
-```jsonc
-{
-  "modo": "script",
-  "minutosRecentes": 10,
-  "categorias": {
-    "Imagens": ["png", "jpg", "webp"],
-    "Planilhas": ["xlsx", "csv"]
-  },
-  "ignorar": ["*.env", "*.pem", "*.key"]
-}
-```
-
-Vale a partir da próxima rodada.
+O modo do botão fica no canto de cima. A arrumação automática tem o modo dela, em **Ajustes**. Se o Claude não responder (sem internet, sem login, limite no fim), o Neatly usa o Script e avisa.
 
 ## Como funciona
 
 ```mermaid
 flowchart LR
-    A["Agendador do Windows"] --> B["organizar.ps1"]
-    B -->|só script| C["Regras do config.json"]
-    B -->|Claude| D["Claude Code"]
-    C --> E["Downloads organizado"]
-    D --> E
-    B --> F["histórico"]
-    F --> G["Painel em localhost:8765"]
+    A["Botão Organizar"] --> P["Prévia"]
+    P --> M["Move e guarda no histórico"]
+    T["Agendador do Windows<br>neatly.exe --agendado"] --> M
+    P -.Claude.-> C["claude -p<br>Haiku 5.5"]
+    T -.Claude.-> C
 ```
 
-- Tudo em PowerShell e HTML, sem instalar nada a mais
-- Roda escondido, sem janela piscando
-- O painel só responde pro seu próprio PC e exige um código gerado a cada abertura: nenhum site consegue mexer nele
-- Testado a cada mudança num Windows de verdade (PowerShell 5.1 e 7)
-- Arquivos do programa em `%LOCALAPPDATA%\Neatly`
+- App em Flutter para Windows, com o motor (`packages/neatly_core`) em Dart puro e testado
+- O Claude só recebe nome, tamanho, data e o começo do texto. Ele devolve as pastas; quem move é o Neatly, com as mesmas travas do modo Script
+- A arrumação automática é o mesmo `neatly.exe` com `--agendado`: roda escondido, sem janela
+- Ajustes e histórico em `%LOCALAPPDATA%\Neatly`
+
+### Desenvolver
+
+```powershell
+flutter pub get
+cd packages\neatly_core; dart test; cd ..\..
+cd app; flutter run -d windows
+```
+
+`NEATLY_PASTA` e `NEATLY_DADOS` trocam a pasta organizada e a pasta de dados, para testar sem mexer na sua Downloads.
 
 ## Perguntas
 
 <details>
 <summary><b>Pode apagar algum arquivo meu?</b></summary>
 
-Não. Ele só move da raiz de Downloads pra subpastas. Nome repetido vira `nome (1).ext`. E toda rodada pode ser desfeita.
+Não. Ele só move da raiz de Downloads para subpastas, nunca sobrescreve, e toda arrumação pode ser desfeita no histórico.
 </details>
 
 <details>
 <summary><b>Minha pasta Downloads está no OneDrive ou em outro disco</b></summary>
 
-Funciona. Ele pergunta pro Windows onde fica a sua pasta Downloads de verdade.
+Funciona. Ele pergunta ao Windows onde fica a sua Downloads de verdade. Dá para escolher outra pasta em Ajustes.
 </details>
 
 <details>
-<summary><b>O painel fica ligado o tempo todo?</b></summary>
+<summary><b>Preciso deixar o Neatly aberto?</b></summary>
 
-Fica, e é leve: um processo parado esperando você abrir a página. Dá pra fechar em Ajustes. A organização continua com ele fechado.
-</details>
-
-<details>
-<summary><b>Como ele mede o limite do Claude?</b></summary>
-
-A cada resposta, o Claude Code informa quanto da janela de 5h e do limite semanal já foi usado. O Neatly guarda a primeira e a última leitura da rodada. Se a janela de 5h reiniciar no meio, ele soma o antes e o depois. Uso do Claude em outro lugar durante a rodada entra na conta.
+Não. A arrumação automática é do Agendador do Windows. Pode fechar a janela.
 </details>
 
 <details>
 <summary><b>Posso usar no notebook do trabalho?</b></summary>
 
-Pode, ele não pede administrador. Mas vale conferir as regras de TI da empresa sobre scripts e qual conta do Claude usar.
+Pode, ele não pede administrador. Mas vale conferir as regras de TI da empresa e qual conta do Claude usar.
 </details>
 
 <details>
 <summary><b>Como desinstalo?</b></summary>
 
-Dois cliques em `desinstalar.cmd` (no zip ou na pasta de dados). Remove tarefas e atalhos e pergunta se quer apagar o histórico. Seus arquivos ficam exatamente onde estão.
+Em Configurações do Windows, Aplicativos, Neatly, Desinstalar. Sai o programa, a tarefa diária, os ajustes e o histórico. Seus arquivos ficam exatamente onde estão.
 </details>
 
 ---
