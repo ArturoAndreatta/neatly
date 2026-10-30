@@ -7,7 +7,13 @@ import '../tema.dart';
 import 'barra.dart';
 import 'comum.dart';
 
-/// Conteúdo da gaveta de ajustes: pasta, arrumação automática e versão.
+String _nomeTema(Tema t) => switch (t) {
+  Tema.sistema => 'Sistema',
+  Tema.claro => 'Claro',
+  Tema.escuro => 'Escuro',
+};
+
+/// Conteúdo da gaveta de ajustes: pasta, arrumação, aparência e versão.
 class ConteudoAjustes extends StatelessWidget {
   const ConteudoAjustes({super.key, required this.estado});
 
@@ -86,7 +92,9 @@ class ConteudoAjustes extends StatelessWidget {
                     _Linha(
                       texto: 'Modo',
                       fim: _Segmentos(
+                        opcoes: Modo.values,
                         valor: a.modo,
+                        nome: nomeModo,
                         aoTrocar: (m) =>
                             estado.trocarAgendamento(a.copyWith(modo: m)),
                       ),
@@ -98,6 +106,18 @@ class ConteudoAjustes extends StatelessWidget {
                       ),
                   ],
                 ),
+        ),
+        const SizedBox(height: 22),
+        _Titulo('Aparência'),
+        _Linha(
+          texto: 'Tema',
+          fim: _Segmentos(
+            opcoes: Tema.values,
+            valor: estado.ajustes.tema,
+            nome: _nomeTema,
+            largura: 70,
+            aoTrocar: estado.trocarTema,
+          ),
         ),
         const SizedBox(height: 22),
         _Titulo('Claude'),
@@ -277,17 +297,26 @@ class _Horario extends StatelessWidget {
   }
 }
 
-/// Claude | Script, com o fundo deslizando até a opção escolhida.
-class _Segmentos extends StatelessWidget {
-  const _Segmentos({required this.valor, required this.aoTrocar});
+/// Claude | Script (ou Sistema | Claro | Escuro), com o fundo deslizando
+/// até a opção escolhida.
+class _Segmentos<T> extends StatelessWidget {
+  const _Segmentos({
+    required this.opcoes,
+    required this.valor,
+    required this.nome,
+    required this.aoTrocar,
+    this.largura = 76,
+  });
 
-  final Modo valor;
-  final ValueChanged<Modo> aoTrocar;
+  final List<T> opcoes;
+  final T valor;
+  final String Function(T) nome;
+  final ValueChanged<T> aoTrocar;
+  final double largura;
 
   @override
   Widget build(BuildContext context) {
     final c = Cores.de(context);
-    const largura = 76.0;
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
@@ -299,7 +328,7 @@ class _Segmentos extends StatelessWidget {
           AnimatedPositioned(
             duration: Mov.base,
             curve: Mov.meio,
-            left: valor == Modo.claude ? 0 : largura,
+            left: opcoes.indexOf(valor) * largura,
             top: 0,
             bottom: 0,
             width: largura,
@@ -320,24 +349,28 @@ class _Segmentos extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              for (final m in Modo.values)
-                GestureDetector(
-                  onTap: () => aoTrocar(m),
-                  child: MouseRegion(
-                    cursor: SystemMouseCursors.click,
-                    child: SizedBox(
-                      width: largura,
-                      height: 28,
-                      child: Center(
-                        child: AnimatedDefaultTextStyle(
-                          duration: Mov.rapido,
-                          style: TextStyle(
-                            fontFamily: fonteTexto,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: m == valor ? c.tinta : c.suave,
+              for (final m in opcoes)
+                Semantics(
+                  button: true,
+                  selected: m == valor,
+                  child: GestureDetector(
+                    onTap: () => aoTrocar(m),
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: SizedBox(
+                        width: largura,
+                        height: 28,
+                        child: Center(
+                          child: AnimatedDefaultTextStyle(
+                            duration: Mov.rapido,
+                            style: TextStyle(
+                              fontFamily: fonteTexto,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: m == valor ? c.tinta : c.suave,
+                            ),
+                            child: Text(nome(m)),
                           ),
-                          child: Text(nomeModo(m)),
                         ),
                       ),
                     ),

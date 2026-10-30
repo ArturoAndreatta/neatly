@@ -425,6 +425,22 @@ void main() {
       final a = Ajustes.carregar(dados.path);
       expect(a.modo, Modo.script);
       expect(a.agendamento.horario, '21:05');
+      expect(a.tema, Tema.sistema);
+    });
+
+    test('tema salvo volta igual e ajustes antigos ficam no Sistema', () {
+      const Ajustes(tema: Tema.claro).salvar(dados.path);
+      expect(Ajustes.carregar(dados.path).tema, Tema.claro);
+      Ajustes.arquivo(
+        dados.path,
+      ).writeAsStringSync('{"versao":2,"modo":"script"}');
+      expect(Ajustes.carregar(dados.path).tema, Tema.sistema);
+      Ajustes.arquivo(dados.path).writeAsStringSync('{"tema":"roxo"}');
+      expect(Ajustes.carregar(dados.path).tema, Tema.sistema);
+      expect(
+        const Ajustes(tema: Tema.escuro).copyWith(modo: Modo.script).tema,
+        Tema.escuro,
+      );
     });
 
     test('XML da tarefa roda quando o PC ligar', () {

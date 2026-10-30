@@ -11,9 +11,15 @@
 ![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?logo=windows&logoColor=white)
 [![Licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-lightgrey)](LICENSE)
 
-<img src="docs/inicio.jpg" width="300" alt="Tela principal do Neatly com 14 arquivos soltos e o botão Organizar">
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/inicio-claro.jpg">
+  <img src="docs/inicio.jpg" width="300" alt="Tela principal do Neatly com 14 arquivos soltos e o botão Organizar">
+</picture>
 &nbsp;&nbsp;
-<img src="docs/previa.jpg" width="300" alt="Prévia com as pastas que o Claude escolheu">
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/previa-claro.jpg">
+  <img src="docs/previa.jpg" width="300" alt="Prévia com as pastas que o Claude escolheu">
+</picture>
 
 [**Baixar**](https://github.com/ArturoAndreatta/neatly/releases/latest/download/NeatlySetup.exe) · [Como funciona](#como-funciona) · [Perguntas](#perguntas)
 

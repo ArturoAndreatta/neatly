@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_acrylic/flutter_acrylic.dart' as acrylic;
 import 'package:neatly_core/neatly_core.dart';
 
 import '../estado.dart';
@@ -13,21 +14,77 @@ import 'historico_ui.dart';
 import 'inicio.dart';
 import 'previa.dart';
 
-class NeatlyApp extends StatelessWidget {
-  const NeatlyApp({super.key, required this.estado});
+/// Tema escolhido nos ajustes, já resolvido: Sistema vira o do Windows.
+bool temaEscuro(Tema t) => switch (t) {
+  Tema.claro => false,
+  Tema.escuro => true,
+  Tema.sistema =>
+    WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+        Brightness.dark,
+};
+
+/// O Mica é pintado pelo Windows: segue a escolha do app, senão fica fundo
+/// escuro com cartão claro.
+Future<void> aplicarMica(bool escuro) =>
+    acrylic.Window.setEffect(effect: acrylic.WindowEffect.mica, dark: escuro);
+
+class NeatlyApp extends StatefulWidget {
+  const NeatlyApp({super.key, required this.estado, this.mica = aplicarMica});
 
   final Estado estado;
+  final Future<void> Function(bool escuro) mica;
+
+  @override
+  State<NeatlyApp> createState() => _NeatlyAppState();
+}
+
+class _NeatlyAppState extends State<NeatlyApp> with WidgetsBindingObserver {
+  late bool _escuro;
+
+  @override
+  void initState() {
+    super.initState();
+    // Igual ao Mica que o main aplicou ao abrir a janela.
+    _escuro = temaEscuro(widget.estado.ajustes.tema);
+    WidgetsBinding.instance.addObserver(this);
+    widget.estado.addListener(_sincronizarMica);
+  }
+
+  @override
+  void dispose() {
+    widget.estado.removeListener(_sincronizarMica);
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // Em Sistema, a troca do Windows chega aqui com o app aberto.
+  @override
+  void didChangePlatformBrightness() => _sincronizarMica();
+
+  void _sincronizarMica() {
+    final escuro = temaEscuro(widget.estado.ajustes.tema);
+    if (escuro == _escuro) return;
+    _escuro = escuro;
+    widget.mica(escuro);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Neatly',
-      debugShowCheckedModeBanner: false,
-      theme: tema(Brightness.light),
-      darkTheme: tema(Brightness.dark),
-      home: ListenableBuilder(
-        listenable: estado,
-        builder: (_, _) => Casca(estado: estado),
+    return ListenableBuilder(
+      listenable: widget.estado,
+      builder: (_, _) => MaterialApp(
+        title: 'Neatly',
+        debugShowCheckedModeBanner: false,
+        theme: tema(Brightness.light),
+        darkTheme: tema(Brightness.dark),
+        themeMode: switch (widget.estado.ajustes.tema) {
+          Tema.sistema => ThemeMode.system,
+          Tema.claro => ThemeMode.light,
+          Tema.escuro => ThemeMode.dark,
+        },
+        themeAnimationDuration: Mov.tema,
+        themeAnimationCurve: Curves.easeOut,
+        home: Casca(estado: widget.estado),
       ),
     );
   }
@@ -255,7 +312,7 @@ class _AvisoGuardadoState extends State<AvisoGuardado> {
                           ? Icons.undo_rounded
                           : Icons.check_rounded,
                       size: 16,
-                      color: c.menta,
+                      color: c.mentaSobreTinta,
                     ),
                     const SizedBox(width: 8),
                     AnimatedSize(
@@ -275,7 +332,7 @@ class _AvisoGuardadoState extends State<AvisoGuardado> {
                       ),
                       BotaoTexto(
                         texto: 'Desfazer',
-                        cor: c.menta,
+                        cor: c.mentaSobreTinta,
                         onTap: () {
                           final v = widget.estado.desfazerRodada(r);
                           setState(() => _voltaram = v);

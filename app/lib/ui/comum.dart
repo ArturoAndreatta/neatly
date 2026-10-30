@@ -80,7 +80,7 @@ class _PressionavelState extends State<Pressionavel> {
                       : c.tinta.withValues(alpha: 0),
                   borderRadius: BorderRadius.circular(widget.raio),
                   border: Border.all(
-                    color: _foco ? c.menta : c.menta.withValues(alpha: 0),
+                    color: _foco ? c.realce : c.realce.withValues(alpha: 0),
                     width: 2,
                   ),
                 ),

@@ -29,25 +29,11 @@ Future<void> main(List<String> args) async {
       backgroundColor: Colors.transparent,
     ),
     () async {
-      final escuro =
-          WidgetsBinding.instance.platformDispatcher.platformBrightness ==
-          Brightness.dark;
-      await acrylic.Window.setEffect(
-        effect: acrylic.WindowEffect.mica,
-        dark: escuro,
-      );
+      await aplicarMica(temaEscuro(estado.ajustes.tema));
       await windowManager.show();
       await windowManager.focus();
     },
   );
-
-  // O Mica acompanha o tema do Windows enquanto o app está aberto.
-  WidgetsBinding.instance.platformDispatcher.onPlatformBrightnessChanged = () {
-    final escuro =
-        WidgetsBinding.instance.platformDispatcher.platformBrightness ==
-        Brightness.dark;
-    acrylic.Window.setEffect(effect: acrylic.WindowEffect.mica, dark: escuro);
-  };
 
   runApp(NeatlyApp(estado: estado));
   estado.procurarAtualizacao();

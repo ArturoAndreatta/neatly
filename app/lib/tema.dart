@@ -13,6 +13,8 @@ class Cores extends ThemeExtension<Cores> {
     required this.fraca,
     required this.linha,
     required this.menta,
+    required this.realce,
+    required this.mentaSobreTinta,
     required this.sobreMenta,
     required this.mentaFundo,
     required this.mentaTinta,
@@ -26,10 +28,13 @@ class Cores extends ThemeExtension<Cores> {
     superficie: Color(0xB8FFFFFF),
     elevada: Color(0xFFFFFFFF),
     tinta: Color(0xFF17202B),
-    suave: Color(0xFF566173),
-    fraca: Color(0xFF6F7A88),
-    linha: Color(0xFFDCE1E7),
+    // Texto fraco ainda passa de 4,5:1 sobre o Mica claro mais escuro.
+    suave: Color(0xFF475262),
+    fraca: Color(0xFF5A6573),
+    linha: Color(0xFFD3D9E0),
     menta: Color(0xFF5FD4A8),
+    realce: Color(0xFF1E9A70),
+    mentaSobreTinta: Color(0xFF5FD4A8),
     sobreMenta: Color(0xFF06291D),
     mentaFundo: Color(0xFFDDF4EA),
     mentaTinta: Color(0xFF0E6B4C),
@@ -47,6 +52,8 @@ class Cores extends ThemeExtension<Cores> {
     fraca: Color(0xFF87929F),
     linha: Color(0xFF2A323D),
     menta: Color(0xFF5FD4A8),
+    realce: Color(0xFF5FD4A8),
+    mentaSobreTinta: Color(0xFF0E6B4C),
     sobreMenta: Color(0xFF06291D),
     mentaFundo: Color(0xFF16382C),
     mentaTinta: Color(0xFF7FE0BB),
@@ -67,6 +74,13 @@ class Cores extends ThemeExtension<Cores> {
   final Color fraca;
   final Color linha;
   final Color menta;
+
+  /// Menta que precisa aparecer sozinha sobre o fundo (anel de foco, ícone
+  /// de pasta nova): no claro, o menta puro some.
+  final Color realce;
+
+  /// Menta sobre a cor da tinta (o aviso de baixo é tinta cheia).
+  final Color mentaSobreTinta;
   final Color sobreMenta;
   final Color mentaFundo;
   final Color mentaTinta;
@@ -80,7 +94,28 @@ class Cores extends ThemeExtension<Cores> {
   Cores copyWith() => this;
 
   @override
-  Cores lerp(Cores? outra, double t) => t < .5 ? this : (outra ?? this);
+  Cores lerp(Cores? outra, double t) {
+    if (outra == null) return this;
+    Color l(Color a, Color b) => Color.lerp(a, b, t)!;
+    return Cores(
+      fundo: l(fundo, outra.fundo),
+      superficie: l(superficie, outra.superficie),
+      elevada: l(elevada, outra.elevada),
+      tinta: l(tinta, outra.tinta),
+      suave: l(suave, outra.suave),
+      fraca: l(fraca, outra.fraca),
+      linha: l(linha, outra.linha),
+      menta: l(menta, outra.menta),
+      realce: l(realce, outra.realce),
+      mentaSobreTinta: l(mentaSobreTinta, outra.mentaSobreTinta),
+      sobreMenta: l(sobreMenta, outra.sobreMenta),
+      mentaFundo: l(mentaFundo, outra.mentaFundo),
+      mentaTinta: l(mentaTinta, outra.mentaTinta),
+      aviso: l(aviso, outra.aviso),
+      avisoFundo: l(avisoFundo, outra.avisoFundo),
+      veu: l(veu, outra.veu),
+    );
+  }
 }
 
 /// Cor de cada tipo de arquivo nas folhas da pilha.
@@ -114,6 +149,9 @@ abstract final class Mov {
   static const gavetaDur = Duration(milliseconds: 320);
   static const pilha = Duration(milliseconds: 720);
 
+  /// Troca de tema: as cores deslizam, sem corte seco.
+  static const tema = Duration(milliseconds: 200);
+
   /// Windows com "efeitos de animação" desligados: só esmaecer, curto.
   static bool reduzir(BuildContext c) => MediaQuery.disableAnimationsOf(c);
 }
@@ -139,7 +177,7 @@ ThemeData tema(Brightness b) {
     splashFactory: NoSplash.splashFactory,
     hoverColor: c.tinta.withValues(alpha: .05),
     highlightColor: Colors.transparent,
-    focusColor: c.menta.withValues(alpha: .25),
+    focusColor: c.realce.withValues(alpha: .25),
     extensions: [c],
   );
   return base.copyWith(
