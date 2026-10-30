@@ -28,7 +28,7 @@ jobs:
           $tag = '${{ github.event.release.tag_name }}'.TrimStart('v')
           $app = (Select-String -Path app/pubspec.yaml -Pattern '^version:\s*([\d.]+)').Matches[0].Groups[1].Value
           $core = (Select-String -Path packages/neatly_core/lib/src/atualizacao.dart -Pattern "versaoNeatly = '([\d.]+)'").Matches[0].Groups[1].Value
-          if ($tag -ne $app -or $tag -ne $core) { throw "Tag $tag, pubspec $app, versaoNeatly $core: precisam ser iguais" }
+          if ($tag -ne $app -or $tag -ne $core) { throw "Tag $tag, pubspec $app, versaoNeatly ${core}: precisam ser iguais" }
 
       - name: Build
         working-directory: app
