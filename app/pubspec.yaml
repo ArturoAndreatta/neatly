@@ -1,0 +1,27 @@
+name: neatly
+description: Sua pasta Downloads arrumada sozinha.
+publish_to: none
+version: 2.1.0+2
+resolution: workspace
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  file_selector: ^1.1.0
+  flutter:
+    sdk: flutter
+  flutter_acrylic: ^1.1.4
+  neatly_core: any
+  path: ^1.9.0
+  window_manager: ^0.5.0
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/
