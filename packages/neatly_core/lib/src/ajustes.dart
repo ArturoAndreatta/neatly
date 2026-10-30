@@ -15,13 +15,14 @@ enum Modo {
       Modo.values.firstWhere((m) => m.name == v, orElse: () => Modo.script);
 }
 
-/// Arrumação automática diária.
+/// Arrumação automática: diária e/ou ao entrar no Windows.
 class Agendamento {
   const Agendamento({
     this.ativo = true,
     this.hora = 9,
     this.minuto = 0,
     this.modo = Modo.script,
+    this.aoLigar = false,
   });
 
   factory Agendamento.deJson(Map<String, Object?> j) => Agendamento(
@@ -29,20 +30,34 @@ class Agendamento {
     hora: (j['hora'] as num?)?.toInt() ?? 9,
     minuto: (j['minuto'] as num?)?.toInt() ?? 0,
     modo: Modo.de(j['modo']),
+    aoLigar: j['aoLigar'] as bool? ?? false,
   );
 
+  /// Todo dia no [horario].
   final bool ativo;
   final int hora;
   final int minuto;
   final Modo modo;
 
-  Agendamento copyWith({bool? ativo, int? hora, int? minuto, Modo? modo}) =>
-      Agendamento(
-        ativo: ativo ?? this.ativo,
-        hora: hora ?? this.hora,
-        minuto: minuto ?? this.minuto,
-        modo: modo ?? this.modo,
-      );
+  /// Também ao ligar o PC (logon), se houver algo solto.
+  final bool aoLigar;
+
+  /// Precisa de tarefa no Agendador.
+  bool get algum => ativo || aoLigar;
+
+  Agendamento copyWith({
+    bool? ativo,
+    int? hora,
+    int? minuto,
+    Modo? modo,
+    bool? aoLigar,
+  }) => Agendamento(
+    ativo: ativo ?? this.ativo,
+    hora: hora ?? this.hora,
+    minuto: minuto ?? this.minuto,
+    modo: modo ?? this.modo,
+    aoLigar: aoLigar ?? this.aoLigar,
+  );
 
   /// "09:00".
   String get horario =>
@@ -53,6 +68,7 @@ class Agendamento {
     'hora': hora,
     'minuto': minuto,
     'modo': modo.name,
+    'aoLigar': aoLigar,
   };
 }
 

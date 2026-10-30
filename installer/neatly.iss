@@ -60,6 +60,7 @@ Filename: "{app}\neatly.exe"; Description: "Abrir o Neatly"; Flags: nowait posti
 Filename: "{app}\neatly.exe"; Flags: nowait; Check: WizardSilent
 
 [UninstallRun]
+; Uma tarefa só, com o gatilho diário e o de logon (Arrumar ao ligar o PC).
 Filename: "schtasks.exe"; Parameters: "/Delete /TN Neatly /F"; Flags: runhidden; RunOnceId: "TarefaNeatly"
 
 [UninstallDelete]

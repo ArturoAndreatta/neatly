@@ -46,26 +46,55 @@ String pastaDownloads() {
 
 const nomeTarefa = 'Neatly';
 
-/// XML da tarefa diária. StartWhenAvailable: PC desligado no horário roda
-/// assim que ligar.
-String xmlTarefa(Agendamento a, String exe) {
+/// Quem está no Windows (`DOMINIO\usuario`): o gatilho de logon só deste
+/// usuário não pede administrador.
+String? usuarioAtual() {
+  final env = Platform.environment;
+  final nome = env['USERNAME'];
+  if (nome == null || nome.isEmpty) return null;
+  final dominio = env['USERDOMAIN'];
+  return dominio == null || dominio.isEmpty ? nome : '$dominio\\$nome';
+}
+
+/// Espera depois do logon: rede e `claude` prontos antes de arrumar.
+const atrasoAoLigar = 'PT2M';
+
+/// XML da tarefa: diária (StartWhenAvailable: PC desligado no horário roda
+/// assim que ligar) e/ou ao entrar no Windows, conforme [a].
+String xmlTarefa(Agendamento a, String exe, {String? usuario}) {
   String esc(String s) => s
       .replaceAll('&', '&amp;')
       .replaceAll('<', '&lt;')
       .replaceAll('>', '&gt;')
       .replaceAll('"', '&quot;');
   final inicio = '2026-01-01T${a.horario}:00';
-  return '''
-<?xml version="1.0" encoding="UTF-16"?>
-<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
-  <RegistrationInfo><Description>Neatly: arruma a pasta Downloads todo dia.</Description></RegistrationInfo>
-  <Triggers>
+  final quando = [
+    if (a.ativo) 'todo dia',
+    if (a.aoLigar) 'ao ligar o PC',
+  ].join(' e ');
+  final diaria = !a.ativo
+      ? ''
+      : '''
     <CalendarTrigger>
       <StartBoundary>$inicio</StartBoundary>
       <Enabled>true</Enabled>
       <ScheduleByDay><DaysInterval>1</DaysInterval></ScheduleByDay>
     </CalendarTrigger>
-  </Triggers>
+''';
+  final logon = !a.aoLigar
+      ? ''
+      : '''
+    <LogonTrigger>
+      <Enabled>true</Enabled>
+${usuario == null ? '' : '      <UserId>${esc(usuario)}</UserId>\n'}      <Delay>$atrasoAoLigar</Delay>
+    </LogonTrigger>
+''';
+  return '''
+<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo><Description>Neatly: arruma a pasta Downloads $quando.</Description></RegistrationInfo>
+  <Triggers>
+$diaria$logon  </Triggers>
   <Principals><Principal id="Author"><LogonType>InteractiveToken</LogonType><RunLevel>LeastPrivilege</RunLevel></Principal></Principals>
   <Settings>
     <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
@@ -86,13 +115,17 @@ String xmlTarefa(Agendamento a, String exe) {
 /// Cria, troca ou remove a tarefa no Agendador do Windows.
 /// Devolve false se o Windows recusar.
 bool aplicarAgendamento(Agendamento a, {String? exe}) {
-  if (!a.ativo) {
+  if (!a.algum) {
     Process.runSync('schtasks', ['/Delete', '/TN', nomeTarefa, '/F']);
     return true;
   }
   final xml = File(p.join(Directory.systemTemp.path, 'neatly-tarefa.xml'));
   // schtasks só lê o XML em UTF-16 com BOM.
-  final unidades = xmlTarefa(a, exe ?? Platform.resolvedExecutable).codeUnits;
+  final unidades = xmlTarefa(
+    a,
+    exe ?? Platform.resolvedExecutable,
+    usuario: usuarioAtual(),
+  ).codeUnits;
   final bytes = <int>[0xFF, 0xFE];
   for (final u in unidades) {
     bytes

@@ -55,7 +55,7 @@ Não precisa ser administrador. Quem usava o Neatly 1 (o painel no navegador) re
 | Velocidade | Na hora | Alguns segundos |
 | Custo | Zero | Um pouco do seu limite (Haiku, o modelo mais leve) |
 
-O modo do botão fica no canto de cima. A arrumação automática tem o modo dela, em **Ajustes**. Se o Claude não responder (sem internet, sem login, limite no fim), o Neatly usa o Script e avisa.
+O modo do botão fica no canto de cima. A arrumação automática tem o modo dela, em **Ajustes**: todo dia num horário e, se quiser, **Arrumar ao ligar o PC** (uns 2 minutos depois de entrar no Windows). As duas só agem se houver algo solto na pasta, sem gastar o Claude à toa, e não repetem se a pasta acabou de ser arrumada. Se o Claude não responder (sem internet, sem login, limite no fim), o Neatly usa o Script e avisa.
 
 ## Como funciona
 
@@ -70,7 +70,7 @@ flowchart LR
 
 - App em Flutter para Windows, com o motor (`packages/neatly_core`) em Dart puro e testado
 - O Claude só recebe nome, tamanho, data e o começo do texto. Ele devolve as pastas; quem move é o Neatly, com as mesmas travas do modo Script
-- A arrumação automática é o mesmo `neatly.exe` com `--agendado`: roda escondido, sem janela
+- A arrumação automática é o mesmo `neatly.exe` com `--agendado`: roda escondido, sem janela, numa tarefa só do Agendador (gatilho diário e/ou de logon), que sai junto ao desinstalar
 - Ajustes e histórico em `%LOCALAPPDATA%\Neatly`
 
 ### Desenvolver
