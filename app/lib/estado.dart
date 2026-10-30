@@ -96,6 +96,7 @@ class Estado extends ChangeNotifier {
       minutosRecentes: ajustes.minutosRecentes,
       ignorar: ajustes.ignorar,
       tema: ajustes.tema,
+      regras: ajustes.regras,
     );
     ajustes.salvar(dados);
     varredura = const Varredura(soltos: [], recentes: 0);
@@ -114,6 +115,77 @@ class Estado extends ChangeNotifier {
     return ok;
   }
 
+  /// Regras de gosto em uso (as da pessoa ou as de fábrica).
+  String get regras => regrasOuPadrao(ajustes.regras);
+
+  /// Troca as regras de gosto. Regras novas passam antes por um teste a
+  /// seco; se não servirem, nada é salvo e volta o motivo.
+  Future<String?> salvarRegras(String? novas) async {
+    final limpas = novas == null || novas.trim().isEmpty ? null : novas.trim();
+    final padrao = limpas == null || limpas == regrasPadrao.trim();
+    if (!padrao) {
+      final erro = await PlanejadorClaude(regras: limpas).testarRegras();
+      if (erro != null) return erro;
+    }
+    ajustes = ajustes.comRegras(padrao ? null : limpas);
+    ajustes.salvar(dados);
+    notifyListeners();
+    return null;
+  }
+
+  /// Replanejando a prévia com um pedido da pessoa.
+  bool ajustando = false;
+
+  /// Por que o último ajuste não deu certo.
+  String? erroAjuste;
+
+  /// Pedido aplicado por último, que ainda pode virar regra.
+  String? pedidoAplicado;
+
+  Future<void> ajustar(String pedido) async {
+    final pl = plano;
+    if (pl == null || ajustando || pedido.trim().isEmpty) return;
+    final g = _geracao;
+    ajustando = true;
+    erroAjuste = null;
+    pedidoAplicado = null;
+    notifyListeners();
+    try {
+      final novo = await ajustarPlano(pl, pedido, ajustes);
+      if (g != _geracao) return;
+      plano = novo;
+      pedidoAplicado = pedido.trim();
+    } on ErroClaude catch (e) {
+      if (g != _geracao) return;
+      erroAjuste = e.mensagem;
+    }
+    ajustando = false;
+    notifyListeners();
+  }
+
+  /// Acrescenta [pedidoAplicado] às regras de gosto, como uma regra a mais.
+  void guardarPedido() {
+    final pedido = pedidoAplicado;
+    if (pedido == null) return;
+    final frase = pedido.endsWith('.') ? pedido : '$pedido.';
+    ajustes = ajustes.comRegras('$regras\n- $frase');
+    ajustes.salvar(dados);
+    pedidoAplicado = null;
+    notifyListeners();
+  }
+
+  void esquecerPedido() {
+    if (pedidoAplicado == null) return;
+    pedidoAplicado = null;
+    notifyListeners();
+  }
+
+  void _limparAjuste() {
+    ajustando = false;
+    erroAjuste = null;
+    pedidoAplicado = null;
+  }
+
   /// Rodada atual é a reorganização da pasta toda.
   bool reorganizando = false;
 
@@ -122,6 +194,7 @@ class Estado extends ChangeNotifier {
     fase = Fase.planejando;
     reorganizando = tudo;
     aviso = null;
+    _limparAjuste();
     notifyListeners();
     final inicio = DateTime.now();
     final novo = tudo
@@ -146,6 +219,7 @@ class Estado extends ChangeNotifier {
 
   void cancelar() {
     _geracao++;
+    _limparAjuste();
     fase = Fase.inicio;
     reorganizando = false;
     plano = null;
@@ -155,7 +229,8 @@ class Estado extends ChangeNotifier {
 
   Future<void> mover() async {
     final pl = plano;
-    if (pl == null) return;
+    if (pl == null || ajustando) return;
+    _limparAjuste();
     fase = Fase.movendo;
     notifyListeners();
     final r = await Future(() => aplicar(pl, historico));
